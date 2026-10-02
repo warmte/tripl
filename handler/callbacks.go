@@ -97,7 +97,7 @@ func parseCallback(data string) (Callback, error) {
 	}
 
 	v1, err := strconv.ParseInt(parts[2], 10, 64)
-	if err != nil || v1 <= 0 {
+	if err != nil || v1 < 0 {
 		return Callback{}, fmt.Errorf(
 			"invalid callback v1: %q",
 			parts[2],
@@ -129,7 +129,7 @@ func parseExtendedCallback(data string) (ExtendedCallback, error) {
 	}
 
 	v1, err := strconv.ParseInt(parts[2], 10, 64)
-	if err != nil || v1 <= 0 {
+	if err != nil || v1 < 0 {
 		return ExtendedCallback{}, fmt.Errorf(
 			"invalid callback v1: %q",
 			parts[2],
