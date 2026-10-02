@@ -1,0 +1,94 @@
+package handler
+
+import (
+	"context"
+
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	. "github.com/warmte/tripl/common"
+	"github.com/warmte/tripl/lang"
+)
+
+type Handlers struct {
+	TicketHandler  *TicketHandler
+	BookingHandler *BookingHandler
+	EventHandler   *EventHandler
+	TripHandler    *TripHandler
+}
+
+func NewHandlers(
+	ticketHandler *TicketHandler,
+	bookingHandler *BookingHandler,
+	eventHandler *EventHandler,
+	tripHandler *TripHandler,
+) *Handlers {
+	return &Handlers{
+		TicketHandler:  ticketHandler,
+		BookingHandler: bookingHandler,
+		EventHandler:   eventHandler,
+		TripHandler:    tripHandler,
+	}
+}
+
+func (h *Handlers) ShowListFor(
+	label Label,
+	ctx context.Context,
+	userID int64,
+	listType ListType,
+	cfg *lang.Cfg,
+) (*tgbotapi.MessageConfig, error) {
+	switch label {
+	case TicketLabel:
+		return h.TicketHandler.ShowList(ctx, userID, listType, cfg)
+	case BookingLabel:
+		return h.BookingHandler.ShowList(ctx, userID, listType, cfg)
+	case EventLabel:
+		return h.EventHandler.ShowList(ctx, userID, listType, cfg)
+	case TripLabel:
+		return h.TripHandler.ShowList(ctx, userID, listType, cfg)
+	default:
+		return nil, ErrIncorrectInput
+	}
+}
+
+func (h *Handlers) AddFor(label Label, ctx context.Context, data TripObjectView) (TripObjectView, error) {
+	switch label {
+	case TicketLabel:
+		return h.TicketHandler.Add(ctx, data)
+	case BookingLabel:
+		return h.BookingHandler.Add(ctx, data)
+	case EventLabel:
+		return h.EventHandler.Add(ctx, data)
+	case TripLabel:
+		return h.TripHandler.Add(ctx, data)
+	default:
+		return nil, ErrIncorrectInput
+	}
+}
+
+func (h *Handlers) HandleEditReply(
+	ctx context.Context,
+	msg *tgbotapi.Message,
+	cfg *lang.Cfg,
+) (tgbotapi.Chattable, error) {
+	if msg == nil || msg.ReplyToMessage == nil {
+		return nil, nil
+	}
+
+	editCtx, err := parseEditContext(msg.ReplyToMessage.Text, cfg)
+	if err != nil {
+		return nil, nil
+	}
+
+	switch editCtx.Label {
+	case TicketLabel:
+		return h.TicketHandler.HandleEditReply(ctx, msg, cfg)
+	case BookingLabel:
+		return h.BookingHandler.HandleEditReply(ctx, msg, cfg)
+	case EventLabel:
+		return h.EventHandler.HandleEditReply(ctx, msg, cfg)
+	case TripLabel:
+		return h.TripHandler.HandleEditReply(ctx, msg, cfg)
+	default:
+		return nil, nil
+	}
+}

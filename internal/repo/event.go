@@ -1,0 +1,417 @@
+package repo
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"time"
+
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
+	. "github.com/warmte/tripl/common"
+)
+
+var ErrEventNotFound = errors.New("event not found")
+
+type EventRepository struct {
+	BasicRepository
+}
+
+var _ Repository[Event] = EventRepository{} // compile-time check
+
+func NewEventRepository(db *pgxpool.Pool) *EventRepository {
+	return &EventRepository{
+		MakeBasic(db, EventsRepo, ErrEventNotFound),
+	}
+}
+
+func (r EventRepository) Create(
+	ctx context.Context,
+	event *Event,
+) (*Event, error) {
+	var eventRepr Event
+
+	err := r.db.QueryRow(
+		ctx,
+		`INSERT INTO events (
+			user_id,
+			name,
+			location,
+			start_time,
+			end_time,
+			cost,
+			comment
+		)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		RETURNING
+			id,
+			user_id,
+			trip_id,
+			name,
+			location,
+			start_time,
+			end_time,
+			cost,
+			comment`,
+		event.UserID,
+		event.Name,
+		event.Location,
+		event.StartTime,
+		event.EndTime,
+		event.Cost,
+		event.Comment,
+	).Scan(
+		&eventRepr.ID,
+		&eventRepr.UserID,
+		&eventRepr.TripID,
+		&eventRepr.Name,
+		&eventRepr.Location,
+		&eventRepr.StartTime,
+		&eventRepr.EndTime,
+		&eventRepr.Cost,
+		&eventRepr.Comment,
+	)
+
+	if err != nil {
+		return nil, fmt.Errorf("create event: %w", err)
+	}
+
+	return &eventRepr, nil
+}
+
+func (r EventRepository) GetByID(
+	ctx context.Context,
+	id int64,
+	userID int64,
+) (*Event, error) {
+	var eventRepr Event
+
+	err := r.db.QueryRow(
+		ctx,
+		`SELECT
+			id,
+			user_id,
+			trip_id,
+			name,
+			location,
+			start_time,
+			end_time,
+			cost,
+			comment
+		FROM events
+		WHERE id = $1
+		  AND user_id = $2`,
+		id,
+		userID,
+	).Scan(
+		&eventRepr.ID,
+		&eventRepr.UserID,
+		&eventRepr.TripID,
+		&eventRepr.Name,
+		&eventRepr.Location,
+		&eventRepr.StartTime,
+		&eventRepr.EndTime,
+		&eventRepr.Cost,
+		&eventRepr.Comment,
+	)
+
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, ErrEventNotFound
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("get event: %w", err)
+	}
+
+	return &eventRepr, nil
+}
+
+func (r *EventRepository) UpdateName(
+	ctx context.Context,
+	id int64,
+	userID int64,
+	name string,
+) error {
+	return r.UpdateField(ctx, id, userID, "name", name)
+}
+
+func (r *EventRepository) UpdateLocation(
+	ctx context.Context,
+	id int64,
+	userID int64,
+	location string,
+) error {
+	return r.UpdateField(ctx, id, userID, "location", location)
+}
+
+func (r *EventRepository) UpdateStartTime(
+	ctx context.Context,
+	id int64,
+	userID int64,
+	startTime time.Time,
+) error {
+	return r.UpdateField(ctx, id, userID, "start_time", startTime)
+}
+
+func (r *EventRepository) UpdateEndTime(
+	ctx context.Context,
+	id int64,
+	userID int64,
+	endTime *time.Time,
+) error {
+	return r.UpdateField(ctx, id, userID, "end_time", endTime)
+}
+
+func (r *EventRepository) UpdateCost(
+	ctx context.Context,
+	id int64,
+	userID int64,
+	cost *string,
+) error {
+	return r.UpdateField(ctx, id, userID, "cost", cost)
+}
+
+func (r *EventRepository) UpdateComment(
+	ctx context.Context,
+	id int64,
+	userID int64,
+	comment *string,
+) error {
+	return r.UpdateField(ctx, id, userID, "comment", comment)
+}
+
+func (r EventRepository) GetActual(
+	ctx context.Context,
+	userID int64,
+) ([]Event, error) {
+	rows, err := r.db.Query(
+		ctx,
+		`SELECT
+			id,
+			user_id,
+			trip_id,
+			name,
+			location,
+			start_time,
+			end_time,
+			cost,
+			comment
+		FROM events
+		WHERE user_id = $1
+		  AND COALESCE(end_time, start_time) >= NOW()
+		ORDER BY start_time ASC`,
+		userID,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("get actual events: %w", err)
+	}
+	defer rows.Close()
+
+	events := make([]Event, 0)
+
+	for rows.Next() {
+		var event Event
+
+		if err := rows.Scan(
+			&event.ID,
+			&event.UserID,
+			&event.TripID,
+			&event.Name,
+			&event.Location,
+			&event.StartTime,
+			&event.EndTime,
+			&event.Cost,
+			&event.Comment,
+		); err != nil {
+			return nil, fmt.Errorf("scan actual event: %w", err)
+		}
+
+		events = append(events, event)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate actual events: %w", err)
+	}
+
+	return events, nil
+}
+
+func (r EventRepository) GetArchive(
+	ctx context.Context,
+	userID int64,
+) ([]Event, error) {
+	rows, err := r.db.Query(
+		ctx,
+		`SELECT
+			id,
+			user_id,
+			trip_id,
+			name,
+			location,
+			start_time,
+			end_time,
+			cost,
+			comment
+		FROM events
+		WHERE user_id = $1
+		  AND COALESCE(end_time, start_time) < NOW()
+		ORDER BY start_time DESC`,
+		userID,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("get archive events: %w", err)
+	}
+	defer rows.Close()
+
+	events := make([]Event, 0)
+
+	for rows.Next() {
+		var event Event
+
+		if err := rows.Scan(
+			&event.ID,
+			&event.UserID,
+			&event.TripID,
+			&event.Name,
+			&event.Location,
+			&event.StartTime,
+			&event.EndTime,
+			&event.Cost,
+			&event.Comment,
+		); err != nil {
+			return nil, fmt.Errorf("scan archive event: %w", err)
+		}
+
+		events = append(events, event)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate archive events: %w", err)
+	}
+
+	return events, nil
+}
+
+func (r EventRepository) GetActualPage(
+	ctx context.Context,
+	userID int64,
+	page int,
+) ([]Event, error) {
+	if page < 0 {
+		return nil, fmt.Errorf("invalid page: %d", page)
+	}
+
+	offset := page * PageSize
+
+	rows, err := r.db.Query(ctx, `
+		SELECT
+			id,
+			user_id,
+			trip_id,
+			name,
+			location,
+			start_time,
+			end_time,
+			cost,
+			comment
+		FROM events
+		WHERE user_id = $1
+		  AND COALESCE(end_time, start_time) >= NOW()
+		ORDER BY start_time, id
+		LIMIT $2 OFFSET $3
+	`, userID, PageSize+1, offset)
+	if err != nil {
+		return nil, fmt.Errorf("get actual events page: %w", err)
+	}
+	defer rows.Close()
+
+	var result []Event
+
+	for rows.Next() {
+		var event Event
+
+		if err := rows.Scan(
+			&event.ID,
+			&event.UserID,
+			&event.TripID,
+			&event.Name,
+			&event.Location,
+			&event.StartTime,
+			&event.EndTime,
+			&event.Cost,
+			&event.Comment,
+		); err != nil {
+			return nil, fmt.Errorf("scan event: %w", err)
+		}
+
+		result = append(result, event)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate events: %w", err)
+	}
+
+	return result, nil
+}
+
+func (r EventRepository) GetArchivePage(
+	ctx context.Context,
+	userID int64,
+	page int,
+) ([]Event, error) {
+	if page < 0 {
+		return nil, fmt.Errorf("invalid page: %d", page)
+	}
+
+	offset := page * PageSize
+
+	rows, err := r.db.Query(ctx, `
+		SELECT
+			id,
+			user_id,
+			trip_id,
+			name,
+			location,
+			start_time,
+			end_time,
+			cost,
+			comment
+		FROM events
+		WHERE user_id = $1
+		  AND COALESCE(end_time, start_time) < NOW()
+		ORDER BY start_time DESC, id DESC
+		LIMIT $2 OFFSET $3
+	`, userID, PageSize+1, offset)
+	if err != nil {
+		return nil, fmt.Errorf("get archive events page: %w", err)
+	}
+	defer rows.Close()
+
+	var result []Event
+
+	for rows.Next() {
+		var event Event
+
+		if err := rows.Scan(
+			&event.ID,
+			&event.UserID,
+			&event.TripID,
+			&event.Name,
+			&event.Location,
+			&event.StartTime,
+			&event.EndTime,
+			&event.Cost,
+			&event.Comment,
+		); err != nil {
+			return nil, fmt.Errorf("scan event: %w", err)
+		}
+
+		result = append(result, event)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate events: %w", err)
+	}
+
+	return result, nil
+}
