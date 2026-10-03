@@ -40,9 +40,10 @@ func (r EventRepository) Create(
 			start_time,
 			end_time,
 			cost,
+			currency,
 			comment
 		)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 		RETURNING
 			id,
 			user_id,
@@ -52,6 +53,7 @@ func (r EventRepository) Create(
 			start_time,
 			end_time,
 			cost,
+			currency,
 			comment`,
 		event.UserID,
 		event.Name,
@@ -59,6 +61,7 @@ func (r EventRepository) Create(
 		event.StartTime,
 		event.EndTime,
 		event.Cost,
+		event.Currency,
 		event.Comment,
 	).Scan(
 		&eventRepr.ID,
@@ -69,6 +72,7 @@ func (r EventRepository) Create(
 		&eventRepr.StartTime,
 		&eventRepr.EndTime,
 		&eventRepr.Cost,
+		&eventRepr.Currency,
 		&eventRepr.Comment,
 	)
 
@@ -97,6 +101,7 @@ func (r EventRepository) GetByID(
 			start_time,
 			end_time,
 			cost,
+			currency,
 			comment
 		FROM events
 		WHERE id = $1
@@ -112,6 +117,7 @@ func (r EventRepository) GetByID(
 		&eventRepr.StartTime,
 		&eventRepr.EndTime,
 		&eventRepr.Cost,
+		&eventRepr.Currency,
 		&eventRepr.Comment,
 	)
 
@@ -171,6 +177,15 @@ func (r *EventRepository) UpdateCost(
 	return r.UpdateField(ctx, id, userID, "cost", cost)
 }
 
+func (r *EventRepository) UpdateCurrency(
+	ctx context.Context,
+	id int64,
+	userID int64,
+	currency *string,
+) error {
+	return r.UpdateField(ctx, id, userID, "currency", currency)
+}
+
 func (r *EventRepository) UpdateComment(
 	ctx context.Context,
 	id int64,
@@ -195,6 +210,7 @@ func (r EventRepository) GetActual(
 			start_time,
 			end_time,
 			cost,
+			currency,
 			comment
 		FROM events
 		WHERE user_id = $1
@@ -221,6 +237,7 @@ func (r EventRepository) GetActual(
 			&event.StartTime,
 			&event.EndTime,
 			&event.Cost,
+			&event.Currency,
 			&event.Comment,
 		); err != nil {
 			return nil, fmt.Errorf("scan actual event: %w", err)
@@ -251,6 +268,7 @@ func (r EventRepository) GetArchive(
 			start_time,
 			end_time,
 			cost,
+			currency,
 			comment
 		FROM events
 		WHERE user_id = $1
@@ -277,6 +295,7 @@ func (r EventRepository) GetArchive(
 			&event.StartTime,
 			&event.EndTime,
 			&event.Cost,
+			&event.Currency,
 			&event.Comment,
 		); err != nil {
 			return nil, fmt.Errorf("scan archive event: %w", err)
@@ -313,6 +332,7 @@ func (r EventRepository) GetActualPage(
 			start_time,
 			end_time,
 			cost,
+			currency,
 			comment
 		FROM events
 		WHERE user_id = $1
@@ -339,6 +359,7 @@ func (r EventRepository) GetActualPage(
 			&event.StartTime,
 			&event.EndTime,
 			&event.Cost,
+			&event.Currency,
 			&event.Comment,
 		); err != nil {
 			return nil, fmt.Errorf("scan event: %w", err)
@@ -375,6 +396,7 @@ func (r EventRepository) GetArchivePage(
 			start_time,
 			end_time,
 			cost,
+			currency,
 			comment
 		FROM events
 		WHERE user_id = $1
@@ -401,6 +423,67 @@ func (r EventRepository) GetArchivePage(
 			&event.StartTime,
 			&event.EndTime,
 			&event.Cost,
+			&event.Currency,
+			&event.Comment,
+		); err != nil {
+			return nil, fmt.Errorf("scan event: %w", err)
+		}
+
+		result = append(result, event)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate events: %w", err)
+	}
+
+	return result, nil
+}
+
+func (r EventRepository) GetPageByTripID(ctx context.Context, tripID int64, userID int64, page int) ([]Event, error) {
+	if page < 0 {
+		return nil, fmt.Errorf("invalid page: %d", page)
+	}
+
+	offset := page * PageSize
+
+	rows, err := r.db.Query(ctx, `
+		SELECT
+			id,
+			user_id,
+			trip_id,
+			name,
+			location,
+			start_time,
+			end_time,
+			cost,
+			currency,
+			comment
+		FROM events
+		WHERE user_id = $1
+		  AND trip_id = $2
+		ORDER BY start_time ASC, id ASC
+		LIMIT $3 OFFSET $4
+	`, userID, tripID, PageSize+1, offset)
+	if err != nil {
+		return nil, fmt.Errorf("get events page by trip id: %w", err)
+	}
+	defer rows.Close()
+
+	var result []Event
+
+	for rows.Next() {
+		var event Event
+
+		if err := rows.Scan(
+			&event.ID,
+			&event.UserID,
+			&event.TripID,
+			&event.Name,
+			&event.Location,
+			&event.StartTime,
+			&event.EndTime,
+			&event.Cost,
+			&event.Currency,
 			&event.Comment,
 		); err != nil {
 			return nil, fmt.Errorf("scan event: %w", err)

@@ -357,3 +357,7 @@ func (r TripRepository) GetArchivePage(
 
 	return result, nil
 }
+
+func (r TripRepository) GetPageByTripID(ctx context.Context, tripID int64, userID int64, page int) ([]Trip, error) {
+	return nil, fmt.Errorf("unsopported: can't get trips by trip id")
+}

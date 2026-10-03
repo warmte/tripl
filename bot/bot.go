@@ -173,7 +173,7 @@ func (bot Bot) matchAddMainFieldsObject(msg *tgbotapi.Message, tripObject *TripO
 	if bot.matchByText(msg, fmt.Sprintf("add_%s", tripObject.Label), []string{tripObject.Cfg.One}) {
 		bot.replyWithKeyboard(
 			msg.Chat.ID,
-			fmt.Sprintf("%s\n\n%s\n\n%s", tripObject.Cfg.AddMainFields, strings.Join(tripObject.Cfg.MainFields, "\n"), tripObject.Cfg.AddExample.Main),
+			fmt.Sprintf("%s\n\n- %s\n\n%s", tripObject.Cfg.AddMainFields, strings.Join(tripObject.Cfg.MainFields, "\n- "), tripObject.Cfg.AddExample.Main),
 			[][]string{{bot.langCfg.Buttons.Cancel}})
 		bot.userService.SetState(msg.Chat.ID, service.AddInfo.For(string(tripObject.Label)))
 		return true
@@ -191,7 +191,7 @@ func (bot Bot) matchAddOtherFieldsObject(msg *tgbotapi.Message, tripObject *Trip
 		}
 		bot.replyWithKeyboard(
 			msg.Chat.ID,
-			fmt.Sprintf("%s\n\n%s\n\n%s", tripObject.Cfg.AddOtherFields, strings.Join(tripObject.Cfg.OtherFields, "\n"), tripObject.Cfg.AddExample.Other),
+			fmt.Sprintf("%s\n\n- %s\n\n%s\n\n%s", tripObject.Cfg.AddOtherFields, strings.Join(tripObject.Cfg.OtherFields, "\n- "), tripObject.Cfg.AddExample.Other, tripObject.Cfg.AddOtherFieldsTips),
 			[][]string{{bot.langCfg.Buttons.Skip, bot.langCfg.Buttons.Cancel}})
 		bot.userService.SetState(msg.Chat.ID, service.Added.For(string(tripObject.Label)).With(mainFieldsParsed))
 		return true
@@ -205,7 +205,7 @@ func (bot Bot) matchAddedObject(msg *tgbotapi.Message, tripObject *TripObject) b
 		currentContext := bot.userService.GetState(msg.Chat.ID).Context
 		if msg.Text != bot.langCfg.Buttons.Skip {
 			otherFieldsParsed, err := selectOtherFieldsParser(msg.Text, tripObject.Label, currentContext)
-			if err == ErrStateError {
+			if err == ErrInternalError {
 				bot.replyForInternalError(msg.Chat.ID)
 				return true
 			}
@@ -222,7 +222,13 @@ func (bot Bot) matchAddedObject(msg *tgbotapi.Message, tripObject *TripObject) b
 			bot.replyForInternalError(msg.Chat.ID)
 			return true
 		}
-		bot.replyWithKeyboard(msg.Chat.ID, fmt.Sprintf("%s\n\n```%s\n%s```", bot.langCfg.Added, tripObject.Cfg.One, added.Show(tripObject.Cfg)),
+		showAdded, err := bot.handlers.ShowSingleFor(bot.ctx, tripObject.Label, added.GetID(), msg.Chat.ID, bot.langCfg)
+		if err != nil {
+			bot.replyForInternalError(msg.Chat.ID)
+			return true
+		}
+		bot.api.Send(*showAdded)
+		bot.replyWithKeyboard(msg.Chat.ID, fmt.Sprintf("%s", bot.langCfg.Added),
 			[][]string{
 				{bot.langCfg.Buttons.Add},
 				{bot.langCfg.TripObjects.Ticket.Many, bot.langCfg.TripObjects.Booking.Many, bot.langCfg.TripObjects.Event.Many, bot.langCfg.TripObjects.Trip.Many},
@@ -302,11 +308,13 @@ func (bot *Bot) Run() {
 								}
 							}
 						}
-
 					}
 				} else if bot.matchByText(msg, "menu", []string{bot.langCfg.Buttons.Back, bot.langCfg.Buttons.Cancel}) {
 					bot.userService.SetState(msg.Chat.ID, service.Default)
 					bot.replyWithKeyboard(msg.Chat.ID, bot.langCfg.Menu, BMain(bot.langCfg))
+				} else if bot.matchByText(msg, "settings", []string{bot.langCfg.Buttons.Settings}) {
+					bot.userService.SetState(msg.Chat.ID, service.Default)
+					bot.replyWithKeyboard(msg.Chat.ID, bot.langCfg.Menu, [][]string{{bot.langCfg.Buttons.Lang.Lang, bot.langCfg.Buttons.Back}})
 				} else if bot.matchByText(msg, "add", []string{bot.langCfg.Buttons.Add}) {
 					bot.userService.SetState(msg.Chat.ID, service.Default)
 					bot.replyWithKeyboard(

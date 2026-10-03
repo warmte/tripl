@@ -45,6 +45,7 @@ func parseEditContext(text string, cfg *lang.Cfg) (editContext, error) {
 			regexp.QuoteMeta(cfg.TripObjects.Trip.One),
 		),
 	)
+
 	matches := editContextRe.FindStringSubmatch(text)
 	if len(matches) != 4 {
 		return editContext{}, fmt.Errorf("invalid edit context")
@@ -114,6 +115,8 @@ func editFields(cfg *lang.Cfg, label Label) []editField {
 			{7, cfg.TripObjects.Ticket.OtherFields[2]},
 			{8, cfg.TripObjects.Ticket.OtherFields[3]},
 			{9, cfg.TripObjects.Ticket.OtherFields[4]},
+			{10, cfg.TripObjects.Ticket.OtherFields[5]},
+			{11, cfg.TripObjects.Ticket.OtherFields[6]},
 		}
 
 	case BookingLabel:
@@ -127,6 +130,8 @@ func editFields(cfg *lang.Cfg, label Label) []editField {
 			{6, cfg.TripObjects.Booking.OtherFields[2]},
 			{7, cfg.TripObjects.Booking.OtherFields[3]},
 			{8, cfg.TripObjects.Booking.OtherFields[4]},
+			{9, cfg.TripObjects.Booking.OtherFields[5]},
+			{10, cfg.TripObjects.Booking.OtherFields[6]},
 		}
 
 	case EventLabel:
@@ -137,6 +142,7 @@ func editFields(cfg *lang.Cfg, label Label) []editField {
 			{3, cfg.TripObjects.Event.OtherFields[0]},
 			{4, cfg.TripObjects.Event.OtherFields[1]},
 			{5, cfg.TripObjects.Event.OtherFields[2]},
+			{6, cfg.TripObjects.Event.OtherFields[3]},
 		}
 
 	case TripLabel:
@@ -376,23 +382,35 @@ func parseTicketEditValue(fieldID int, value string) (parsedEditValue, error) {
 
 	case 6:
 		if value == "-" {
+			return parsedEditValue{"currency", nil}, nil
+		}
+		return parsedEditValue{"currency", &value}, nil
+
+	case 7:
+		if value == "-" {
 			return parsedEditValue{"departure_address", nil}, nil
 		}
 		return parsedEditValue{"departure_address", &value}, nil
 
-	case 7:
+	case 8:
 		if value == "-" {
 			return parsedEditValue{"arrival_address", nil}, nil
 		}
 		return parsedEditValue{"arrival_address", &value}, nil
 
-	case 8:
+	case 9:
 		if value == "-" {
 			return parsedEditValue{"seat", nil}, nil
 		}
 		return parsedEditValue{"seat", &value}, nil
 
-	case 9:
+	case 10:
+		if value == "-" {
+			return parsedEditValue{"number", nil}, nil
+		}
+		return parsedEditValue{"number", &value}, nil
+
+	case 11:
 		if value == "-" {
 			return parsedEditValue{"comment", nil}, nil
 		}
@@ -433,11 +451,17 @@ func parseBookingEditValue(fieldID int, value string) (parsedEditValue, error) {
 
 	case 5:
 		if value == "-" {
+			return parsedEditValue{"currency", nil}, nil
+		}
+		return parsedEditValue{"currency", &value}, nil
+
+	case 6:
+		if value == "-" {
 			return parsedEditValue{"address", nil}, nil
 		}
 		return parsedEditValue{"address", &value}, nil
 
-	case 6:
+	case 7:
 		if value == "-" {
 			return parsedEditValue{"check_in_time", nil}, nil
 		}
@@ -449,7 +473,7 @@ func parseBookingEditValue(fieldID int, value string) (parsedEditValue, error) {
 
 		return parsedEditValue{"check_in_time", t}, nil
 
-	case 7:
+	case 8:
 		if value == "-" {
 			return parsedEditValue{"check_out_time", nil}, nil
 		}
@@ -461,7 +485,13 @@ func parseBookingEditValue(fieldID int, value string) (parsedEditValue, error) {
 
 		return parsedEditValue{"check_out_time", t}, nil
 
-	case 8:
+	case 9:
+		if value == "-" {
+			return parsedEditValue{"number", nil}, nil
+		}
+		return parsedEditValue{"number", &value}, nil
+
+	case 10:
 		if value == "-" {
 			return parsedEditValue{"comment", nil}, nil
 		}
@@ -506,6 +536,12 @@ func parseEventEditValue(fieldID int, value string) (parsedEditValue, error) {
 		return parsedEditValue{"cost", &value}, nil
 
 	case 5:
+		if value == "-" {
+			return parsedEditValue{"currency", nil}, nil
+		}
+		return parsedEditValue{"currency", &value}, nil
+
+	case 6:
 		if value == "-" {
 			return parsedEditValue{"comment", nil}, nil
 		}

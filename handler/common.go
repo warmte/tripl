@@ -48,7 +48,7 @@ func (h CommonHandler[T]) ShowList(
 
 	message := tgbotapi.NewMessage(
 		userID,
-		h.renderObjects(
+		h.RenderObjects(
 			result.Items,
 			TripObjectCfgByLabel(cfg, h.label),
 		),
@@ -89,7 +89,7 @@ func (h CommonHandler[T]) HandleList(
 		return nil, fmt.Errorf("get page: %w", err)
 	}
 
-	text := h.renderObjects(page.Items, cfg)
+	text := h.RenderObjects(page.Items, cfg)
 	keyboard := makeListKeyboard(h.label, listCallback.Action, listCallback.V1, page.HasNext)
 
 	var edit tgbotapi.EditMessageTextConfig
@@ -112,7 +112,7 @@ func (h CommonHandler[T]) HandleList(
 	return &edit, nil
 }
 
-func (h CommonHandler[T]) renderObjects(items []T, cfg lang.TripObjectCfg) string {
+func (h CommonHandler[T]) RenderObjects(items []T, cfg lang.TripObjectCfg) string {
 	if len(items) == 0 {
 		return fmt.Sprintf("%s.", cfg.Empty)
 	}
@@ -160,19 +160,21 @@ func (h CommonHandler[T]) ShowSingle(
 	if err != nil {
 		return nil, fmt.Errorf("get %s: %w", h.label, err)
 	}
-	tripId := (*object).GetTripID()
-
-	tripInfo := ""
-	if tripId != nil {
-		trip, err := h.tripService.GetByID(ctx, userID, *tripId)
-		if err == nil {
-			tripInfo = trip.Preview(&cfg.TripObjects.Trip)
-		}
-	}
-
 	text := fmt.Sprintf("```%s\n%s\n\n```", objectCfg.One, (*object).Show(&objectCfg))
-	if tripInfo != "" {
-		text += fmt.Sprintf("🔗 %s", tripInfo)
+	tripId := (*object).GetTripID()
+	if h.label != TripLabel {
+		tripInfo := ""
+		if tripId != nil {
+			trip, err := h.tripService.GetByID(ctx, userID, *tripId)
+			if err == nil {
+				tripInfo = trip.Preview(&cfg.TripObjects.Trip)
+			}
+		}
+		if tripInfo != "" {
+			text += fmt.Sprintf("🔗 %s", tripInfo)
+		}
+	} else {
+
 	}
 
 	msg := tgbotapi.NewMessage(userID, lang.EscapeMarkdownV2(text))
@@ -223,15 +225,8 @@ func (h CommonHandler[T]) HandleDeleteSingle(
 		return nil, fmt.Errorf("callback message is nil")
 	}
 
-	deleteButton := tgbotapi.NewInlineKeyboardButtonData(
-		cfg.Buttons.Delete,
-		fmt.Sprintf("%s:%s:%d", h.label, DeleteSingleConfirmed, objectID),
-	)
-
-	cancelButton := tgbotapi.NewInlineKeyboardButtonData(
-		cfg.Buttons.Cancel,
-		fmt.Sprintf("%s:%s:%d", h.label, GetSingle, objectID),
-	)
+	deleteButton := button(cfg.Buttons.Delete, MakeCallback(h.label, DeleteSingleConfirmed, objectID))
+	cancelButton := button(cfg.Buttons.Cancel, MakeCallback(h.label, GetSingle, objectID))
 
 	keyboard := tgbotapi.InlineKeyboardMarkup{
 		InlineKeyboard: [][]tgbotapi.InlineKeyboardButton{
@@ -307,32 +302,14 @@ func (h CommonHandler[T]) HandleAttachSingle(
 	if page > 0 {
 		navigation = append(
 			navigation,
-			tgbotapi.NewInlineKeyboardButtonData(
-				"←",
-				fmt.Sprintf(
-					"%s:%s:%d:%d",
-					h.label,
-					action,
-					objectID,
-					page-1,
-				),
-			),
+			button("←", fmt.Sprintf("%s:%s:%d:%d", h.label, action, objectID, page-1)),
 		)
 	}
 
 	if tripPage.HasNext {
 		navigation = append(
 			navigation,
-			tgbotapi.NewInlineKeyboardButtonData(
-				"→",
-				fmt.Sprintf(
-					"%s:%s:%d:%d",
-					h.label,
-					action,
-					objectID,
-					page+1,
-				),
-			),
+			button("→", fmt.Sprintf("%s:%s:%d:%d", h.label, action, objectID, page+1)),
 		)
 	}
 
@@ -341,15 +318,15 @@ func (h CommonHandler[T]) HandleAttachSingle(
 	}
 
 	changeListView :=
-		tgbotapi.NewInlineKeyboardButtonData(
+		button(
 			cfg.TripObjects.Trip.Archive,
 			fmt.Sprintf("%s:%s:%d:0", h.label, AttachSingleArchived, objectID),
 		)
 	if action != AttachSingleActual {
 		changeListView =
-			tgbotapi.NewInlineKeyboardButtonData(
+			button(
 				cfg.TripObjects.Trip.Actual,
-				fmt.Sprintf("%s:%s:%d:0", h.label, AttachSingleActual, objectID),
+				MakeExtendedCallback(h.label, AttachSingleActual, objectID, 0),
 			)
 	}
 
@@ -357,15 +334,9 @@ func (h CommonHandler[T]) HandleAttachSingle(
 		rows = append(
 			rows,
 			[]tgbotapi.InlineKeyboardButton{
-				tgbotapi.NewInlineKeyboardButtonData(
+				button(
 					fmt.Sprintf("[%d] %s", trip.ID, trip.Name),
-					fmt.Sprintf(
-						"%s:%s:%d:%d",
-						h.label,
-						"attach_trip",
-						objectID,
-						trip.ID,
-					),
+					fmt.Sprintf("%s:%s:%d:%d", h.label, AttachTrip, objectID, trip.ID),
 				),
 			},
 		)
@@ -375,15 +346,7 @@ func (h CommonHandler[T]) HandleAttachSingle(
 		rows,
 		[]tgbotapi.InlineKeyboardButton{
 			changeListView,
-			tgbotapi.NewInlineKeyboardButtonData(
-				cfg.Buttons.Cancel,
-				fmt.Sprintf(
-					"%s:%s:%d",
-					h.label,
-					GetSingle,
-					objectID,
-				),
-			),
+			button(cfg.Buttons.Cancel, MakeCallback(h.label, GetSingle, objectID)),
 		},
 	)
 
@@ -411,11 +374,9 @@ func (h CommonHandler[T]) HandleAttachTrip(
 	if callback.Message == nil {
 		return nil, fmt.Errorf("callback message is nil")
 	}
-
 	if err := h.service.AttachToTrip(ctx, objectID, tripID, callback.From.ID); err != nil {
 		return nil, fmt.Errorf("attach %s to trip: %w", h.label, err)
 	}
-
 	return h.HandleGetSingle(ctx, callback, objectID, cfg)
 }
 
@@ -428,12 +389,71 @@ func (h CommonHandler[T]) HandleDetachSingle(
 	if callback.Message == nil {
 		return nil, fmt.Errorf("callback message is nil")
 	}
-
 	if err := h.service.DetachFromTrip(ctx, objectID, callback.From.ID); err != nil {
 		return nil, fmt.Errorf("detach %s from trip: %w", h.label, err)
 	}
-
 	return h.HandleGetSingle(ctx, callback, objectID, cfg)
+}
+
+func (h CommonHandler[T]) GetPageByTripID(ctx context.Context, tripID int64, userID int64, page int) (Page[T], error) {
+	if h.label == TripLabel {
+		return Page[T]{}, ErrInternalError
+	}
+	return h.service.GetPageByTripID(ctx, tripID, userID, page)
+}
+
+func (h CommonHandler[T]) GetCostsByTripID(ctx context.Context, tripID int64, userID int64) (map[string]float64, error) {
+	if h.label == TripLabel {
+		return nil, ErrInternalError
+	}
+	return h.service.GetCostsByTripID(ctx, tripID, userID)
+}
+
+func (h CommonHandler[T]) CountByTripID(ctx context.Context, tripID int64, userID int64) (int64, error) {
+	if h.label == TripLabel {
+		return 0, ErrInternalError
+	}
+	return h.service.CountByTripID(ctx, tripID, userID)
+}
+
+func (h CommonHandler[T]) HandleListForTrip(
+	ctx context.Context,
+	callback *tgbotapi.CallbackQuery,
+	tripID int64,
+	pageN int,
+	cfg *lang.Cfg,
+) (tgbotapi.Chattable, error) {
+	if callback.Message == nil {
+		return nil, fmt.Errorf("callback message is nil")
+	}
+	if h.label == TripLabel {
+		return nil, ErrInternalError
+	}
+	page, err := h.GetPageByTripID(ctx, tripID, callback.From.ID, pageN)
+	if err != nil {
+		return nil, fmt.Errorf("get page: %w", err)
+	}
+	objectCfg := TripObjectCfgByLabel(cfg, h.label)
+	text := h.RenderObjects(page.Items, objectCfg)
+	keyboard := makeTripListKeyboard(TicketLabel, TripTickets, tripID, int64(pageN), page.HasNext, cfg)
+
+	var edit tgbotapi.EditMessageTextConfig
+
+	if keyboard != nil {
+		edit = tgbotapi.NewEditMessageTextAndMarkup(
+			callback.Message.Chat.ID,
+			callback.Message.MessageID,
+			text,
+			*keyboard,
+		)
+	} else {
+		edit = tgbotapi.NewEditMessageText(
+			callback.Message.Chat.ID,
+			callback.Message.MessageID,
+			text,
+		)
+	}
+	return edit, nil
 }
 
 func (h CommonHandler[T]) SelectAction(
@@ -493,11 +513,9 @@ func (h CommonHandler[T]) SelectExtendedAction(
 	case AttachTrip:
 		r, err := h.HandleAttachTrip(ctx, callback, parsedCallback.V1, parsedCallback.V2, cfg)
 		return []tgbotapi.Chattable{r}, err
-
 	case EditField:
 		r, err := h.HandleEditField(ctx, callback, parsedCallback.V1, int(parsedCallback.V2), cfg)
 		return []tgbotapi.Chattable{r}, err
-
 	default:
 		return nil, unsupportedCallbackError
 	}

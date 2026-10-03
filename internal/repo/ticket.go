@@ -38,12 +38,14 @@ func (r TicketRepository) Create(ctx context.Context, ticket *Ticket) (*Ticket, 
 			departure_time,
 			arrival_time,
 			cost,
+			currency,
 			departure_address,
 			arrival_address,
 			seat,
+			number,
 			comment
 		)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
 		RETURNING
 			id,
 			user_id,
@@ -54,9 +56,11 @@ func (r TicketRepository) Create(ctx context.Context, ticket *Ticket) (*Ticket, 
 			departure_time,
 			arrival_time,
 			cost,
+			currency,
 			departure_address,
 			arrival_address,
 			seat,
+			number,
 			comment`,
 		ticket.UserID,
 		ticket.Vehicle,
@@ -65,9 +69,11 @@ func (r TicketRepository) Create(ctx context.Context, ticket *Ticket) (*Ticket, 
 		ticket.DepartureTime,
 		ticket.ArrivalTime,
 		ticket.Cost,
+		ticket.Currency,
 		ticket.DepartureAddress,
 		ticket.ArrivalAddress,
 		ticket.Seat,
+		ticket.Number,
 		ticket.Comment,
 	).Scan(
 		&ticketResult.ID,
@@ -79,9 +85,11 @@ func (r TicketRepository) Create(ctx context.Context, ticket *Ticket) (*Ticket, 
 		&ticketResult.DepartureTime,
 		&ticketResult.ArrivalTime,
 		&ticketResult.Cost,
+		&ticketResult.Currency,
 		&ticketResult.DepartureAddress,
 		&ticketResult.ArrivalAddress,
 		&ticketResult.Seat,
+		&ticketResult.Number,
 		&ticketResult.Comment,
 	)
 
@@ -111,9 +119,11 @@ func (r TicketRepository) GetByID(
 			departure_time,
 			arrival_time,
 			cost,
+			currency,
 			departure_address,
 			arrival_address,
 			seat,
+			number,
 			comment
 		FROM tickets
 		WHERE id = $1 AND user_id = $2`,
@@ -129,9 +139,11 @@ func (r TicketRepository) GetByID(
 		&ticket.DepartureTime,
 		&ticket.ArrivalTime,
 		&ticket.Cost,
+		&ticket.Currency,
 		&ticket.DepartureAddress,
 		&ticket.ArrivalAddress,
 		&ticket.Seat,
+		&ticket.Number,
 		&ticket.Comment,
 	)
 
@@ -200,6 +212,15 @@ func (r *TicketRepository) UpdateCost(
 	return r.UpdateField(ctx, id, userID, "cost", cost)
 }
 
+func (r *TicketRepository) UpdateCurrency(
+	ctx context.Context,
+	id int64,
+	userID int64,
+	currency *string,
+) error {
+	return r.UpdateField(ctx, id, userID, "currency", currency)
+}
+
 func (r *TicketRepository) UpdateDepartureAddress(
 	ctx context.Context,
 	id int64,
@@ -227,6 +248,15 @@ func (r *TicketRepository) UpdateSeat(
 	return r.UpdateField(ctx, id, userID, "seat", seat)
 }
 
+func (r *TicketRepository) UpdateNumber(
+	ctx context.Context,
+	id int64,
+	userID int64,
+	number *string,
+) error {
+	return r.UpdateField(ctx, id, userID, "number", number)
+}
+
 func (r *TicketRepository) UpdateComment(
 	ctx context.Context,
 	id int64,
@@ -252,9 +282,11 @@ func (r TicketRepository) GetActual(
 			departure_time,
 			arrival_time,
 			cost,
+			currency,
 			departure_address,
 			arrival_address,
 			seat,
+			number,
 			comment
 		FROM tickets
 		WHERE user_id = $1
@@ -282,9 +314,11 @@ func (r TicketRepository) GetActual(
 			&ticket.DepartureTime,
 			&ticket.ArrivalTime,
 			&ticket.Cost,
+			&ticket.Currency,
 			&ticket.DepartureAddress,
 			&ticket.ArrivalAddress,
 			&ticket.Seat,
+			&ticket.Number,
 			&ticket.Comment,
 		); err != nil {
 			return nil, fmt.Errorf("scan actual ticket: %w", err)
@@ -316,9 +350,11 @@ func (r TicketRepository) GetArchive(
 			departure_time,
 			arrival_time,
 			cost,
+			currency,
 			departure_address,
 			arrival_address,
 			seat,
+			number,
 			comment
 		FROM tickets
 		WHERE user_id = $1
@@ -346,9 +382,11 @@ func (r TicketRepository) GetArchive(
 			&ticket.DepartureTime,
 			&ticket.ArrivalTime,
 			&ticket.Cost,
+			&ticket.Currency,
 			&ticket.DepartureAddress,
 			&ticket.ArrivalAddress,
 			&ticket.Seat,
+			&ticket.Number,
 			&ticket.Comment,
 		); err != nil {
 			return nil, fmt.Errorf("scan archive ticket: %w", err)
@@ -386,9 +424,11 @@ func (r TicketRepository) GetActualPage(
 			departure_time,
 			arrival_time,
 			cost,
+			currency,
 			departure_address,
 			arrival_address,
 			seat,
+			number,
 			comment
 		FROM tickets
 		WHERE user_id = $1
@@ -416,9 +456,11 @@ func (r TicketRepository) GetActualPage(
 			&ticket.DepartureTime,
 			&ticket.ArrivalTime,
 			&ticket.Cost,
+			&ticket.Currency,
 			&ticket.DepartureAddress,
 			&ticket.ArrivalAddress,
 			&ticket.Seat,
+			&ticket.Number,
 			&ticket.Comment,
 		); err != nil {
 			return nil, fmt.Errorf("scan ticket: %w", err)
@@ -456,9 +498,11 @@ func (r TicketRepository) GetArchivePage(
 			departure_time,
 			arrival_time,
 			cost,
+			currency,
 			departure_address,
 			arrival_address,
 			seat,
+			number,
 			comment
 		FROM tickets
 		WHERE user_id = $1
@@ -486,9 +530,86 @@ func (r TicketRepository) GetArchivePage(
 			&ticket.DepartureTime,
 			&ticket.ArrivalTime,
 			&ticket.Cost,
+			&ticket.Currency,
 			&ticket.DepartureAddress,
 			&ticket.ArrivalAddress,
 			&ticket.Seat,
+			&ticket.Number,
+			&ticket.Comment,
+		); err != nil {
+			return nil, fmt.Errorf("scan ticket: %w", err)
+		}
+
+		result = append(result, ticket)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate tickets: %w", err)
+	}
+
+	return result, nil
+}
+
+func (r TicketRepository) GetPageByTripID(
+	ctx context.Context,
+	tripID int64,
+	userID int64,
+	page int,
+) ([]Ticket, error) {
+	if page < 0 {
+		return nil, fmt.Errorf("invalid page: %d", page)
+	}
+
+	offset := page * PageSize
+
+	rows, err := r.db.Query(ctx, `
+		SELECT
+			id,
+			user_id,
+			trip_id,
+			vehicle,
+			departure_point,
+			arrival_point,
+			departure_time,
+			arrival_time,
+			cost,
+			currency,
+			departure_address,
+			arrival_address,
+			seat,
+			number,
+			comment
+		FROM tickets
+		WHERE user_id = $1
+		  AND trip_id = $2
+		ORDER BY departure_time ASC, id ASC
+		LIMIT $3 OFFSET $4
+	`, userID, tripID, PageSize+1, offset)
+	if err != nil {
+		return nil, fmt.Errorf("get tickets page by trip id: %w", err)
+	}
+	defer rows.Close()
+
+	var result []Ticket
+
+	for rows.Next() {
+		var ticket Ticket
+
+		if err := rows.Scan(
+			&ticket.ID,
+			&ticket.UserID,
+			&ticket.TripID,
+			&ticket.Vehicle,
+			&ticket.DeparturePoint,
+			&ticket.ArrivalPoint,
+			&ticket.DepartureTime,
+			&ticket.ArrivalTime,
+			&ticket.Cost,
+			&ticket.Currency,
+			&ticket.DepartureAddress,
+			&ticket.ArrivalAddress,
+			&ticket.Seat,
+			&ticket.Number,
 			&ticket.Comment,
 		); err != nil {
 			return nil, fmt.Errorf("scan ticket: %w", err)

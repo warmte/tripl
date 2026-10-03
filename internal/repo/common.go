@@ -25,6 +25,9 @@ type Repository[T any] interface {
 	GetArchivePage(ctx context.Context, userID int64, page int) ([]T, error)
 	AttachToTrip(ctx context.Context, objID int64, tripID int64, userID int64) error
 	DetachFromTrip(ctx context.Context, objID int64, userID int64) error
+	GetPageByTripID(ctx context.Context, tripID int64, userID int64, page int) ([]T, error)
+	CountByTripID(ctx context.Context, tripID int64, userID int64) (int64, error)
+	GetCostsByTripID(ctx context.Context, tripID int64, userID int64) (map[string]float64, error)
 }
 
 type BasicRepository struct {
@@ -124,4 +127,74 @@ func (r BasicRepository) DetachFromTrip(ctx context.Context, objID int64, userID
 	}
 
 	return nil
+}
+
+func (r BasicRepository) CountByTripID(
+	ctx context.Context,
+	tripID int64,
+	userID int64,
+) (int64, error) {
+	var count int64
+
+	err := r.db.QueryRow(
+		ctx,
+		fmt.Sprintf(`
+		SELECT COUNT(*)
+		FROM %s
+		WHERE trip_id = $1
+		  AND user_id = $2
+		`, r.repoType),
+		tripID,
+		userID,
+	).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("count by trip id: %w", err)
+	}
+
+	return count, nil
+}
+
+func (r BasicRepository) GetCostsByTripID(
+	ctx context.Context,
+	tripID int64,
+	userID int64,
+) (map[string]float64, error) {
+	rows, err := r.db.Query(
+		ctx,
+		fmt.Sprintf(`
+ 		SELECT COALESCE(currency, '') AS currency, SUM(cost::numeric)
+    FROM %s
+    WHERE trip_id = $1 
+		  AND user_id = $2
+      AND cost ~ '^[[:space:]]*[+-]?([0-9]+([.][0-9]+)?|[.][0-9]+)[[:space:]]*$'
+    GROUP BY COALESCE(currency, '') 
+		`, r.repoType),
+		tripID,
+		userID,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("get costs by trip id: %w", err)
+	}
+	defer rows.Close()
+
+	result := make(map[string]float64)
+
+	for rows.Next() {
+		var (
+			currency string
+			sum      float64
+		)
+
+		if err := rows.Scan(&currency, &sum); err != nil {
+			return nil, fmt.Errorf("scan costs: %w", err)
+		}
+
+		result[currency] = sum
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate costs: %w", err)
+	}
+
+	return result, nil
 }

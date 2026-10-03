@@ -33,6 +33,9 @@ func (ec EmptyContext) Preview(cfg *lang.TripObjectCfg) string {
 func (ec EmptyContext) GetTripID() *int64 {
 	return nil
 }
+func (ec EmptyContext) GetID() int64 {
+	return 0
+}
 
 var (
 	Default State = State{"", EmptyContext{}}

@@ -31,6 +31,7 @@ const (
 type TripObjectView interface {
 	Show(cfg *lang.TripObjectCfg) string
 	Preview(cfg *lang.TripObjectCfg) string
+	GetID() int64
 	GetTripID() *int64
 }
 
@@ -79,9 +80,11 @@ type Ticket struct {
 	DepartureTime    time.Time
 	ArrivalTime      time.Time
 	Cost             *string
+	Currency         *string
 	DepartureAddress *string
 	ArrivalAddress   *string
 	Seat             *string
+	Number           *string
 	Comment          *string
 }
 
@@ -94,9 +97,11 @@ type Booking struct {
 	CheckInDate  time.Time
 	CheckOutDate time.Time
 	Cost         *string
+	Currency     *string
 	Address      *string
 	CheckInTime  *time.Time
 	CheckOutTime *time.Time
+	Number       *string
 	Comment      *string
 }
 
@@ -109,6 +114,7 @@ type Event struct {
 	StartTime time.Time
 	EndTime   *time.Time
 	Cost      *string
+	Currency  *string
 	Comment   *string
 }
 
@@ -175,24 +181,36 @@ func (f Ticket) Show(cfg *lang.TripObjectCfg) string {
 	addField(
 		&lines,
 		cfg.OtherFields[1],
-		f.DepartureAddress,
+		f.Currency,
 	)
 
 	addField(
 		&lines,
 		cfg.OtherFields[2],
-		f.ArrivalAddress,
+		f.DepartureAddress,
 	)
 
 	addField(
 		&lines,
 		cfg.OtherFields[3],
-		f.Seat,
+		f.ArrivalAddress,
 	)
 
 	addField(
 		&lines,
 		cfg.OtherFields[4],
+		f.Seat,
+	)
+
+	addField(
+		&lines,
+		cfg.OtherFields[5],
+		f.Number,
+	)
+
+	addField(
+		&lines,
+		cfg.OtherFields[6],
 		f.Comment,
 	)
 
@@ -235,13 +253,19 @@ func (f Booking) Show(cfg *lang.TripObjectCfg) string {
 	addField(
 		&lines,
 		cfg.OtherFields[1],
+		f.Currency,
+	)
+
+	addField(
+		&lines,
+		cfg.OtherFields[2],
 		f.Address,
 	)
 
 	if f.CheckInTime != nil {
 		addStringField(
 			&lines,
-			cfg.OtherFields[2],
+			cfg.OtherFields[3],
 			f.CheckInTime.Format(TimeLayout),
 		)
 	}
@@ -249,14 +273,20 @@ func (f Booking) Show(cfg *lang.TripObjectCfg) string {
 	if f.CheckOutTime != nil {
 		addStringField(
 			&lines,
-			cfg.OtherFields[3],
+			cfg.OtherFields[4],
 			f.CheckOutTime.Format(TimeLayout),
 		)
 	}
 
 	addField(
 		&lines,
-		cfg.OtherFields[4],
+		cfg.OtherFields[5],
+		f.Number,
+	)
+
+	addField(
+		&lines,
+		cfg.OtherFields[6],
 		f.Comment,
 	)
 
@@ -295,7 +325,7 @@ func (f Event) Show(cfg *lang.TripObjectCfg) string {
 	addField(
 		&lines,
 		cfg.OtherFields[1],
-		f.Cost,
+		f.Currency,
 	)
 
 	addField(
@@ -342,7 +372,7 @@ func (f Ticket) Preview(cfg *lang.TripObjectCfg) string {
 }
 
 func (f Booking) Preview(cfg *lang.TripObjectCfg) string {
-	return fmt.Sprintf("/bb%d %s\n%s, %s - %s", f.ID, f.Place, f.City, f.CheckInDate.Format(DateLayout), f.CheckOutDate.Format(DateLayout))
+	return fmt.Sprintf("/bk%d %s\n%s, %s - %s", f.ID, f.Place, f.City, f.CheckInDate.Format(DateLayout), f.CheckOutDate.Format(DateLayout))
 }
 
 func (f Event) Preview(cfg *lang.TripObjectCfg) string {
@@ -357,6 +387,22 @@ func (f Event) Preview(cfg *lang.TripObjectCfg) string {
 
 func (f Trip) Preview(cfg *lang.TripObjectCfg) string {
 	return fmt.Sprintf("/tr%d %s, %s-%s", f.ID, f.Name, f.StartDate.Format(DateLayout), f.EndDate.Format(DateLayout))
+}
+
+func (f Ticket) GetID() int64 {
+	return f.ID
+}
+
+func (f Booking) GetID() int64 {
+	return f.ID
+}
+
+func (f Event) GetID() int64 {
+	return f.ID
+}
+
+func (f Trip) GetID() int64 {
+	return f.ID
 }
 
 func (f Ticket) GetTripID() *int64 {

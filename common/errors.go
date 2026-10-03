@@ -13,7 +13,7 @@ var (
 	ErrIncorrectDateTime       = errors.New("incorrect datetime")
 	ErrIncorrectNumberOfFields = errors.New("incorrect number of fields")
 	ErrIncorrectInput          = errors.New("incorrect input")
-	ErrStateError              = errors.New("state error")
+	ErrInternalError           = errors.New("internal error")
 )
 
 func GetErrorMessage(err error, cfg lang.Cfg) string {

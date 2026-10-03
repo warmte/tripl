@@ -50,6 +50,27 @@ func (h *Handlers) ShowListFor(
 	}
 }
 
+func (h *Handlers) ShowSingleFor(
+	ctx context.Context,
+	label Label,
+	objectID int64,
+	userID int64,
+	cfg *lang.Cfg,
+) (*tgbotapi.MessageConfig, error) {
+	switch label {
+	case TicketLabel:
+		return h.TicketHandler.ShowSingle(ctx, userID, objectID, cfg)
+	case BookingLabel:
+		return h.BookingHandler.ShowSingle(ctx, userID, objectID, cfg)
+	case EventLabel:
+		return h.EventHandler.ShowSingle(ctx, userID, objectID, cfg)
+	case TripLabel:
+		return h.TripHandler.ShowSingle(ctx, userID, objectID, cfg)
+	default:
+		return nil, ErrIncorrectInput
+	}
+}
+
 func (h *Handlers) AddFor(label Label, ctx context.Context, data TripObjectView) (TripObjectView, error) {
 	switch label {
 	case TicketLabel:

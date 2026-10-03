@@ -15,8 +15,8 @@ func NewEventHandler(
 ) *EventHandler {
 	return &EventHandler{
 		CommonHandler[Event]{
-			label:   EventLabel,
-			service: service,
+			label:       EventLabel,
+			service:     service,
 			tripService: tripService,
 		},
 	}

@@ -9,6 +9,8 @@ func EscapeMarkdownV2(s string) string {
 		")", "\\)",
 		"(", "\\(",
 		"-", "\\-",
+		"<", "\\<",
+		">", "\\>",
 	)
 
 	return replacer.Replace(s)

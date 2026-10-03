@@ -18,6 +18,9 @@ type Service[T TripObjectView] interface {
 	Delete(ctx context.Context, id int64, userID int64) error
 	AttachToTrip(ctx context.Context, objID int64, tripID int64, userID int64) error
 	DetachFromTrip(ctx context.Context, objID int64, userID int64) error
+	GetPageByTripID(ctx context.Context, tripID int64, userID int64, page int) (Page[T], error)
+	CountByTripID(ctx context.Context, tripID int64, userID int64) (int64, error)
+	GetCostsByTripID(ctx context.Context, tripID int64, userID int64) (map[string]float64, error)
 }
 
 type CommonService[T TripObjectView] struct {
@@ -72,7 +75,7 @@ func (s CommonService[T]) GetArchivePage(
 func (s CommonService[T]) Create(ctx context.Context, data TripObjectView) (*T, error) {
 	value, ok := data.(T)
 	if !ok {
-		return nil, ErrStateError
+		return nil, ErrInternalError
 	}
 	return s.repo.Create(ctx, &value)
 }
@@ -92,6 +95,21 @@ func (s CommonService[T]) GetPage(
 	default:
 		return Page[T]{}, fmt.Errorf("unknown list type: %s", listType)
 	}
+}
+
+func (s CommonService[T]) GetPageByTripID(
+	ctx context.Context,
+	tripID int64,
+	userID int64,
+	page int,
+) (Page[T], error) {
+	tickets, err := s.repo.GetPageByTripID(ctx, tripID, userID, page)
+	if err != nil {
+		return Page[T]{},
+			fmt.Errorf("get page by trip id: %w", err)
+	}
+
+	return PreparePage(tickets), nil
 }
 
 func (s CommonService[T]) GetByID(
@@ -166,4 +184,12 @@ func (s CommonService[T]) DetachFromTrip(
 	}
 
 	return nil
+}
+
+func (h CommonService[T]) GetCostsByTripID(ctx context.Context, tripID int64, userID int64) (map[string]float64, error) {
+	return h.repo.GetCostsByTripID(ctx, tripID, userID)
+}
+
+func (h CommonService[T]) CountByTripID(ctx context.Context, tripID int64, userID int64) (int64, error) {
+	return h.repo.CountByTripID(ctx, tripID, userID)
 }

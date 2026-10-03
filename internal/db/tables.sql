@@ -31,9 +31,11 @@ CREATE TABLE tickets (
     arrival_time TIMESTAMP NOT NULL,
 
     cost VARCHAR(256),
+    currency VARCHAR(16),
     departure_address VARCHAR(256),
     arrival_address VARCHAR(256),
     seat VARCHAR(256),
+    number VARCHAR(256),
     comment VARCHAR(256),
 
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -53,9 +55,11 @@ CREATE TABLE bookings (
     check_out_date DATE NOT NULL,
 
     cost VARCHAR(256),
+    currency VARCHAR(16),
     address VARCHAR(256),
     check_in_time TIME,
     check_out_time TIME,
+    number VARCHAR(256),
     comment VARCHAR(256),
 
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -75,6 +79,7 @@ CREATE TABLE events (
 
     end_time TIMESTAMP,
     cost VARCHAR(256),
+    currency VARCHAR(256),
     comment VARCHAR(256),
 
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),

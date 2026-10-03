@@ -46,7 +46,7 @@ func parseTicketMainFields(input string, userID int64) (Ticket, error) {
 	if len(lines) != 5 {
 		return Ticket{}, ErrIncorrectNumberOfFields
 	}
-	if hasTooLongField(lines[0], lines[1], lines[2]) {
+	if hasTooLongField(lines...) {
 		return Ticket{}, ErrTooLongField
 	}
 
@@ -71,10 +71,10 @@ func parseTicketMainFields(input string, userID int64) (Ticket, error) {
 
 func parseTicketOtherFields(input string, ticket *Ticket) (Ticket, error) {
 	lines := strings.Split(input, "\n")
-	if len(lines) != 5 {
+	if len(lines) != 7 {
 		return Ticket{}, ErrIncorrectNumberOfFields
 	}
-	if hasTooLongField(lines[1], lines[2], lines[3], lines[4]) {
+	if hasTooLongField(lines...) {
 		return Ticket{}, ErrTooLongField
 	}
 
@@ -86,10 +86,12 @@ func parseTicketOtherFields(input string, ticket *Ticket) (Ticket, error) {
 		DepartureTime:    ticket.DepartureTime,
 		ArrivalTime:      ticket.ArrivalTime,
 		Cost:             opt(lines[0]),
-		DepartureAddress: opt(lines[1]),
-		ArrivalAddress:   opt(lines[2]),
-		Seat:             opt(lines[3]),
-		Comment:          opt(lines[4]),
+		Currency:         opt(lines[1]),
+		DepartureAddress: opt(lines[2]),
+		ArrivalAddress:   opt(lines[3]),
+		Seat:             opt(lines[4]),
+		Number:           opt(lines[5]),
+		Comment:          opt(lines[6]),
 	}, nil
 }
 
@@ -98,7 +100,7 @@ func parseBookingMainFields(input string, userID int64) (Booking, error) {
 	if len(lines) != 4 {
 		return Booking{}, ErrIncorrectNumberOfFields
 	}
-	if hasTooLongField(lines[0], lines[1]) {
+	if hasTooLongField(lines...) {
 		return Booking{}, ErrTooLongField
 	}
 
@@ -122,18 +124,18 @@ func parseBookingMainFields(input string, userID int64) (Booking, error) {
 
 func parseBookingOtherFields(input string, booking *Booking) (Booking, error) {
 	lines := strings.Split(input, "\n")
-	if len(lines) != 5 {
+	if len(lines) != 7 {
 		return Booking{}, ErrIncorrectNumberOfFields
 	}
-	if hasTooLongField(lines[1], lines[4]) {
+	if hasTooLongField(lines...) {
 		return Booking{}, ErrTooLongField
 	}
 
-	checkInTime, err := parseOptionalDatetime(lines[2], TimeLayout, "booking check-in time")
+	checkInTime, err := parseOptionalDatetime(lines[3], TimeLayout, "booking check-in time")
 	if err != nil {
 		return Booking{}, ErrIncorrectTime
 	}
-	checkOutTime, err := parseOptionalDatetime(lines[3], TimeLayout, "booking check-out time")
+	checkOutTime, err := parseOptionalDatetime(lines[4], TimeLayout, "booking check-out time")
 	if err != nil {
 		return Booking{}, ErrIncorrectTime
 	}
@@ -145,10 +147,12 @@ func parseBookingOtherFields(input string, booking *Booking) (Booking, error) {
 		CheckInDate:  booking.CheckInDate,
 		CheckOutDate: booking.CheckOutDate,
 		Cost:         opt(lines[0]),
-		Address:      opt(lines[1]),
+		Currency:     opt(lines[1]),
+		Address:      opt(lines[2]),
 		CheckInTime:  checkInTime,
 		CheckOutTime: checkOutTime,
-		Comment:      opt(lines[4]),
+		Number:       opt(lines[5]),
+		Comment:      opt(lines[6]),
 	}, nil
 }
 
@@ -157,7 +161,7 @@ func parseEventMainFields(input string, userID int64) (Event, error) {
 	if len(lines) != 3 {
 		return Event{}, ErrIncorrectNumberOfFields
 	}
-	if hasTooLongField(lines[0], lines[1]) {
+	if hasTooLongField(lines...) {
 		return Event{}, ErrTooLongField
 	}
 
@@ -176,10 +180,10 @@ func parseEventMainFields(input string, userID int64) (Event, error) {
 
 func parseEventOtherFields(input string, event *Event) (Event, error) {
 	lines := strings.Split(input, "\n")
-	if len(lines) != 3 {
+	if len(lines) != 4 {
 		return Event{}, ErrIncorrectNumberOfFields
 	}
-	if hasTooLongField(lines[2]) {
+	if hasTooLongField(lines...) {
 		return Event{}, ErrTooLongField
 	}
 
@@ -195,7 +199,8 @@ func parseEventOtherFields(input string, event *Event) (Event, error) {
 		StartTime: event.StartTime,
 		EndTime:   endTime,
 		Cost:      opt(lines[1]),
-		Comment:   opt(lines[2]),
+		Currency:  opt(lines[2]),
+		Comment:   opt(lines[3]),
 	}, nil
 }
 
@@ -204,7 +209,7 @@ func parseTripMainFields(input string, userID int64) (Trip, error) {
 	if len(lines) != 3 {
 		return Trip{}, ErrIncorrectNumberOfFields
 	}
-	if hasTooLongField(lines[0]) {
+	if hasTooLongField(lines...) {
 		return Trip{}, ErrTooLongField
 	}
 
@@ -230,7 +235,7 @@ func parseTripOtherFields(input string, trip *Trip) (Trip, error) {
 	if len(lines) != 1 {
 		return Trip{}, ErrIncorrectNumberOfFields
 	}
-	if hasTooLongField(lines[0]) {
+	if hasTooLongField(lines...) {
 		return Trip{}, ErrTooLongField
 	}
 
@@ -267,28 +272,28 @@ func selectOtherFieldsParser(input string, label Label, current TripObjectView) 
 	case TicketLabel:
 		value, ok := current.(Ticket)
 		if !ok {
-			return nil, ErrStateError
+			return nil, ErrInternalError
 		}
 		return parseTicketOtherFields(input, &value)
 
 	case BookingLabel:
 		value, ok := current.(Booking)
 		if !ok {
-			return nil, ErrStateError
+			return nil, ErrInternalError
 		}
 		return parseBookingOtherFields(input, &value)
 
 	case EventLabel:
 		value, ok := current.(Event)
 		if !ok {
-			return nil, ErrStateError
+			return nil, ErrInternalError
 		}
 		return parseEventOtherFields(input, &value)
 
 	case TripLabel:
 		value, ok := current.(Trip)
 		if !ok {
-			return nil, ErrStateError
+			return nil, ErrInternalError
 		}
 		return parseTripOtherFields(input, &value)
 

@@ -40,12 +40,14 @@ func (r BookingRepository) Create(
 			check_in_date,
 			check_out_date,
 			cost,
+			currency,
 			address,
 			check_in_time,
 			check_out_time,
+			number,
 			comment
 		)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
 		RETURNING
 			id,
 			user_id,
@@ -55,9 +57,11 @@ func (r BookingRepository) Create(
 			check_in_date,
 			check_out_date,
 			cost,
+			currency,
 			address,
 			check_in_time,
 			check_out_time,
+			number,
 			comment`,
 		booking.UserID,
 		booking.City,
@@ -65,9 +69,11 @@ func (r BookingRepository) Create(
 		booking.CheckInDate,
 		booking.CheckOutDate,
 		booking.Cost,
+		booking.Currency,
 		booking.Address,
 		booking.CheckInTime,
 		booking.CheckOutTime,
+		booking.Number,
 		booking.Comment,
 	).Scan(
 		&bookingRepr.ID,
@@ -78,9 +84,11 @@ func (r BookingRepository) Create(
 		&bookingRepr.CheckInDate,
 		&bookingRepr.CheckOutDate,
 		&bookingRepr.Cost,
+		&bookingRepr.Currency,
 		&bookingRepr.Address,
 		&bookingRepr.CheckInTime,
 		&bookingRepr.CheckOutTime,
+		&bookingRepr.Number,
 		&bookingRepr.Comment,
 	)
 
@@ -109,9 +117,11 @@ func (r BookingRepository) GetByID(
 			check_in_date,
 			check_out_date,
 			cost,
+			currency,
 			address,
 			check_in_time,
 			check_out_time,
+			number,
 			comment
 		FROM bookings
 		WHERE id = $1
@@ -127,9 +137,11 @@ func (r BookingRepository) GetByID(
 		&bookingRepr.CheckInDate,
 		&bookingRepr.CheckOutDate,
 		&bookingRepr.Cost,
+		&bookingRepr.Currency,
 		&bookingRepr.Address,
 		&bookingRepr.CheckInTime,
 		&bookingRepr.CheckOutTime,
+		&bookingRepr.Number,
 		&bookingRepr.Comment,
 	)
 
@@ -189,6 +201,15 @@ func (r *BookingRepository) UpdateCost(
 	return r.UpdateField(ctx, id, userID, "cost", cost)
 }
 
+func (r *BookingRepository) UpdateCurrency(
+	ctx context.Context,
+	id int64,
+	userID int64,
+	currency *string,
+) error {
+	return r.UpdateField(ctx, id, userID, "currency", currency)
+}
+
 func (r *BookingRepository) UpdateAddress(
 	ctx context.Context,
 	id int64,
@@ -216,6 +237,15 @@ func (r *BookingRepository) UpdateCheckOutTime(
 	return r.UpdateField(ctx, id, userID, "check_out_time", checkOutTime)
 }
 
+func (r *BookingRepository) UpdateNumber(
+	ctx context.Context,
+	id int64,
+	userID int64,
+	number *string,
+) error {
+	return r.UpdateField(ctx, id, userID, "number", number)
+}
+
 func (r *BookingRepository) UpdateComment(
 	ctx context.Context,
 	id int64,
@@ -240,9 +270,11 @@ func (r BookingRepository) GetActual(
 			check_in_date,
 			check_out_date,
 			cost,
+			currency,
 			address,
 			check_in_time,
 			check_out_time,
+			number,
 			comment
 		FROM bookings
 		WHERE user_id = $1
@@ -269,9 +301,11 @@ func (r BookingRepository) GetActual(
 			&booking.CheckInDate,
 			&booking.CheckOutDate,
 			&booking.Cost,
+			&booking.Currency,
 			&booking.Address,
 			&booking.CheckInTime,
 			&booking.CheckOutTime,
+			&booking.Number,
 			&booking.Comment,
 		); err != nil {
 			return nil, fmt.Errorf("scan actual booking: %w", err)
@@ -302,9 +336,11 @@ func (r BookingRepository) GetArchive(
 			check_in_date,
 			check_out_date,
 			cost,
+			currency,
 			address,
 			check_in_time,
 			check_out_time,
+			number,
 			comment
 		FROM bookings
 		WHERE user_id = $1
@@ -331,9 +367,11 @@ func (r BookingRepository) GetArchive(
 			&booking.CheckInDate,
 			&booking.CheckOutDate,
 			&booking.Cost,
+			&booking.Currency,
 			&booking.Address,
 			&booking.CheckInTime,
 			&booking.CheckOutTime,
+			&booking.Number,
 			&booking.Comment,
 		); err != nil {
 			return nil, fmt.Errorf("scan archive booking: %w", err)
@@ -370,9 +408,11 @@ func (r BookingRepository) GetActualPage(
 			check_in_date,
 			check_out_date,
 			cost,
+			currency,
 			address,
 			check_in_time,
 			check_out_time,
+			number,
 			comment
 		FROM bookings
 		WHERE user_id = $1
@@ -399,9 +439,11 @@ func (r BookingRepository) GetActualPage(
 			&booking.CheckInDate,
 			&booking.CheckOutDate,
 			&booking.Cost,
+			&booking.Currency,
 			&booking.Address,
 			&booking.CheckInTime,
 			&booking.CheckOutTime,
+			&booking.Number,
 			&booking.Comment,
 		); err != nil {
 			return nil, fmt.Errorf("scan booking: %w", err)
@@ -438,9 +480,11 @@ func (r BookingRepository) GetArchivePage(
 			check_in_date,
 			check_out_date,
 			cost,
+			currency,
 			address,
 			check_in_time,
 			check_out_time,
+			number,
 			comment
 		FROM bookings
 		WHERE user_id = $1
@@ -467,9 +511,79 @@ func (r BookingRepository) GetArchivePage(
 			&booking.CheckInDate,
 			&booking.CheckOutDate,
 			&booking.Cost,
+			&booking.Currency,
 			&booking.Address,
 			&booking.CheckInTime,
 			&booking.CheckOutTime,
+			&booking.Number,
+			&booking.Comment,
+		); err != nil {
+			return nil, fmt.Errorf("scan booking: %w", err)
+		}
+
+		result = append(result, booking)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate bookings: %w", err)
+	}
+
+	return result, nil
+}
+
+func (r BookingRepository) GetPageByTripID(ctx context.Context, tripID int64, userID int64, page int) ([]Booking, error) {
+	if page < 0 {
+		return nil, fmt.Errorf("invalid page: %d", page)
+	}
+
+	offset := page * PageSize
+
+	rows, err := r.db.Query(ctx, `
+		SELECT
+			id,
+			user_id,
+			trip_id,
+			city,
+			place,
+			check_in_date,
+			check_out_date,
+			cost,
+			currency,
+			address,
+			check_in_time,
+			check_out_time,
+			number,
+			comment
+		FROM bookings
+		WHERE user_id = $1
+		  AND trip_id = $2
+		ORDER BY check_in_date ASC, id ASC
+		LIMIT $3 OFFSET $4
+	`, userID, tripID, PageSize+1, offset)
+	if err != nil {
+		return nil, fmt.Errorf("get bookings page by trip id: %w", err)
+	}
+	defer rows.Close()
+
+	var result []Booking
+
+	for rows.Next() {
+		var booking Booking
+
+		if err := rows.Scan(
+			&booking.ID,
+			&booking.UserID,
+			&booking.TripID,
+			&booking.City,
+			&booking.Place,
+			&booking.CheckInDate,
+			&booking.CheckOutDate,
+			&booking.Cost,
+			&booking.Currency,
+			&booking.Address,
+			&booking.CheckInTime,
+			&booking.CheckOutTime,
+			&booking.Number,
 			&booking.Comment,
 		); err != nil {
 			return nil, fmt.Errorf("scan booking: %w", err)

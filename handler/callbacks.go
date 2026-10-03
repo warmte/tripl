@@ -22,6 +22,10 @@ const (
 	AttachTrip            CallbackAction = "attach_trip"
 	DetachSingle          CallbackAction = "detach"
 	GetSingle             CallbackAction = "get"
+	TripStats             CallbackAction = "trip_stats"
+	TripTickets           CallbackAction = "trips_tickets"
+	TripBookings          CallbackAction = "trips_bookings"
+	TripEvents            CallbackAction = "trips_events"
 )
 
 type Callback struct {
@@ -37,32 +41,12 @@ type ExtendedCallback struct {
 	V2     int64
 }
 
-func MakeCallback(
-	label Label,
-	action CallbackAction,
-	id int64,
-) string {
-	return fmt.Sprintf(
-		"%s:%s:%d",
-		label,
-		action,
-		id,
-	)
+func MakeCallback(label Label, action CallbackAction, id int64) string {
+	return fmt.Sprintf("%s:%s:%d", label, action, id)
 }
 
-func MakeExtendedCallback(
-	label Label,
-	action CallbackAction,
-	id int64,
-	value int64,
-) string {
-	return fmt.Sprintf(
-		"%s:%s:%d:%d",
-		label,
-		action,
-		id,
-		value,
-	)
+func MakeExtendedCallback(label Label, action CallbackAction, id int64, value int64) string {
+	return fmt.Sprintf("%s:%s:%d:%d", label, action, id, value)
 }
 
 func parseCallback(data string) (Callback, error) {
@@ -88,7 +72,7 @@ func parseCallback(data string) (Callback, error) {
 
 	action := CallbackAction(parts[1])
 	switch action {
-	case ActualList, ArchiveList, EditSingle, DeleteSingle, GetSingle, DeleteSingleConfirmed, DetachSingle:
+	case ActualList, ArchiveList, EditSingle, DeleteSingle, GetSingle, DeleteSingleConfirmed, DetachSingle, TripStats:
 	default:
 		return Callback{}, fmt.Errorf(
 			"unknown action: %q",
@@ -120,7 +104,7 @@ func parseExtendedCallback(data string) (ExtendedCallback, error) {
 	label := Label(parts[0])
 
 	switch label {
-	case TicketLabel, BookingLabel, EventLabel:
+	case TicketLabel, BookingLabel, EventLabel, TripLabel:
 	default:
 		return ExtendedCallback{}, fmt.Errorf(
 			"invalid extended callback label: %q",
@@ -146,7 +130,7 @@ func parseExtendedCallback(data string) (ExtendedCallback, error) {
 
 	action := CallbackAction(parts[1])
 	switch action {
-	case AttachSingleActual, AttachSingleArchived, AttachTrip, EditField:
+	case AttachSingleActual, AttachSingleArchived, AttachTrip, EditField, TripTickets, TripBookings, TripEvents:
 	default:
 		return ExtendedCallback{}, fmt.Errorf(
 			"unknown action: %q",
