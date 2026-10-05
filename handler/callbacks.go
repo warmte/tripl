@@ -13,6 +13,7 @@ type CallbackAction string
 const (
 	ArchiveList           CallbackAction = "archive"
 	ActualList            CallbackAction = "actual"
+	TomorrowList          CallbackAction = "tomorrow"
 	DeleteSingle          CallbackAction = "delete"
 	DeleteSingleConfirmed CallbackAction = "delete_confirmed"
 	EditSingle            CallbackAction = "edit"
@@ -72,7 +73,7 @@ func parseCallback(data string) (Callback, error) {
 
 	action := CallbackAction(parts[1])
 	switch action {
-	case ActualList, ArchiveList, EditSingle, DeleteSingle, GetSingle, DeleteSingleConfirmed, DetachSingle, TripStats:
+	case ActualList, ArchiveList, EditSingle, DeleteSingle, GetSingle, DeleteSingleConfirmed, DetachSingle, TripStats, TomorrowList:
 	default:
 		return Callback{}, fmt.Errorf(
 			"unknown action: %q",

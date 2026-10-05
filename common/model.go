@@ -127,6 +127,12 @@ type Trip struct {
 	Comment   *string
 }
 
+type User struct {
+	ID        int64
+	Language  string
+	CreatedAt time.Time
+}
+
 func addStringField(lines *[]string, name, value string) {
 	*lines = append(*lines, fmt.Sprintf("%s: %s", name, value))
 }

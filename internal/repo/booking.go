@@ -598,3 +598,74 @@ func (r BookingRepository) GetPageByTripID(ctx context.Context, tripID int64, us
 
 	return result, nil
 }
+
+func (r BookingRepository) GetForTime(
+	ctx context.Context,
+	userID int64,
+	start time.Time,
+	end time.Time,
+	page int,
+) ([]Booking, error) {
+	if page < 0 {
+		return nil, fmt.Errorf("invalid page: %d", page)
+	}
+
+	offset := page * PageSize
+
+	rows, err := r.db.Query(ctx, `
+		SELECT
+			id,
+			user_id,
+			trip_id,
+			city,
+			place,
+			check_in_date,
+			check_out_date,
+			cost,
+			address,
+			check_in_time,
+			check_out_time,
+			comment
+		FROM bookings
+		WHERE user_id = $1
+		  AND check_in_date >= $2::date
+		  AND check_in_date < $3::date
+		ORDER BY check_in_date ASC, id ASC
+		LIMIT $4 OFFSET $5
+	`, userID, start, end, PageSize+1, offset)
+	if err != nil {
+		return nil, fmt.Errorf("get bookings for time: %w", err)
+	}
+	defer rows.Close()
+
+	result := make([]Booking, 0, PageSize+1)
+
+	for rows.Next() {
+		var booking Booking
+
+		if err := rows.Scan(
+			&booking.ID,
+			&booking.UserID,
+			&booking.TripID,
+			&booking.City,
+			&booking.Place,
+			&booking.CheckInDate,
+			&booking.CheckOutDate,
+			&booking.Cost,
+			&booking.Address,
+			&booking.CheckInTime,
+			&booking.CheckOutTime,
+			&booking.Comment,
+		); err != nil {
+			return nil, fmt.Errorf("scan booking: %w", err)
+		}
+
+		result = append(result, booking)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate bookings: %w", err)
+	}
+
+	return result, nil
+}

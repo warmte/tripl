@@ -2,9 +2,13 @@ package repo
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"time"
 
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
+	. "github.com/warmte/tripl/common"
 )
 
 const (
@@ -28,6 +32,7 @@ type Repository[T any] interface {
 	GetPageByTripID(ctx context.Context, tripID int64, userID int64, page int) ([]T, error)
 	CountByTripID(ctx context.Context, tripID int64, userID int64) (int64, error)
 	GetCostsByTripID(ctx context.Context, tripID int64, userID int64) (map[string]float64, error)
+	GetForTime(ctx context.Context, userID int64, start time.Time, end time.Time, page int) ([]T, error)
 }
 
 type BasicRepository struct {
@@ -66,7 +71,13 @@ func (r BasicRepository) UpdateField(ctx context.Context, id int64, userID int64
 
 	tag, err := r.db.Exec(ctx, query, value, id, userID)
 	if err != nil {
-		return fmt.Errorf("can't update field %s: %w", field, err)
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) &&
+			pgErr.Code == "23514" {
+			return ErrDatetimeRestraint
+		}
+
+		return fmt.Errorf("update field %s: %w", field, err)
 	}
 
 	if tag.RowsAffected() == 0 {

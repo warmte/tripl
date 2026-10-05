@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	. "github.com/warmte/tripl/common"
@@ -220,4 +221,93 @@ func makeTripListKeyboard(
 	}
 	keyboard := tgbotapi.NewInlineKeyboardMarkup(buttons)
 	return &keyboard
+}
+
+func (s CommonHandler[T]) GetPageForTime(ctx context.Context, userID int64, start time.Time, end time.Time, page int) (Page[T], error) {
+	return s.service.GetPageForTime(ctx, userID, start, end, page)
+}
+
+func getStartEndTime(location *time.Location) (time.Time, time.Time, error) {
+	now := time.Now().In(location)
+	start := time.Date(now.Year(), now.Month(), now.Day()+1, 0, 0, 0, 0, location)
+	end := start.AddDate(0, 0, 1)
+
+	return start, end, nil
+}
+
+func (h CommonHandler[T]) buildTomorrowList(
+	ctx context.Context,
+	userID int64,
+	location *time.Location,
+	page int,
+	cfg *lang.Cfg,
+) (string, *tgbotapi.InlineKeyboardMarkup, error) {
+	start, end, err := getStartEndTime(location)
+	if err != nil {
+		return "", nil, err
+	}
+
+	result, err := h.GetPageForTime(ctx, userID, start, end, page)
+	if err != nil {
+		return "", nil, fmt.Errorf("get tomorrow page: %w", err)
+	}
+	if len(result.Items) == 0 {
+		return "", nil, ErrEmptyList
+	}
+
+	objectCfg := TripObjectCfgByLabel(cfg, h.label)
+	text := fmt.Sprintf("%s:\n\n%s", objectCfg.Many, h.RenderObjects(result.Items, objectCfg))
+	keyboard := makeListKeyboard(h.label, TomorrowList, int64(page), result.HasNext)
+	return text, keyboard, nil
+}
+
+func (h CommonHandler[T]) ShowTomorrowList(
+	ctx context.Context,
+	userID int64,
+	location *time.Location,
+	cfg *lang.Cfg,
+) (*tgbotapi.MessageConfig, error) {
+	text, keyboard, err := h.buildTomorrowList(ctx, userID, location, 0, cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	message := tgbotapi.NewMessage(userID, text)
+	message.ReplyMarkup = keyboard
+
+	return &message, nil
+}
+
+func (h CommonHandler[T]) HandleTomorrowList(
+	ctx context.Context,
+	callback *tgbotapi.CallbackQuery,
+	location *time.Location,
+	page int,
+	cfg *lang.Cfg,
+) (*tgbotapi.EditMessageTextConfig, error) {
+	if callback.Message == nil {
+		return nil, fmt.Errorf("callback message is nil")
+	}
+
+	text, keyboard, err := h.buildTomorrowList(ctx, callback.From.ID, location, 0, cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	replyMsg := tgbotapi.NewEditMessageTextAndMarkup(
+		callback.Message.Chat.ID,
+		callback.Message.MessageID,
+		text,
+		*keyboard,
+	)
+
+	if len(keyboard.InlineKeyboard) == 0 {
+		replyMsg = tgbotapi.NewEditMessageText(
+			callback.Message.Chat.ID,
+			callback.Message.MessageID,
+			text,
+		)
+	}
+
+	return &replyMsg, nil
 }

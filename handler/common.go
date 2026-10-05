@@ -84,3 +84,4 @@ func (h CommonHandler[T]) SelectExtendedAction(
 func button(text string, callback string) tgbotapi.InlineKeyboardButton {
 	return tgbotapi.NewInlineKeyboardButtonData(text, callback)
 }
+

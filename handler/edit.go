@@ -200,7 +200,7 @@ func (h CommonHandler[T]) HandleEditSingle(
 	objectPtr, err := h.service.GetByID(ctx, callback.From.ID, objectID)
 	object := *objectPtr
 	if err != nil {
-		return nil, fmt.Errorf("get %s: %w", h.label, err)
+		return nil, err
 	}
 
 	objectCfg := TripObjectCfgByLabel(cfg, h.label)
@@ -318,7 +318,7 @@ func (h CommonHandler[T]) HandleEditReply(
 	}
 
 	if err := h.service.UpdateField(ctx, editCtx.ObjectID, msg.From.ID, field.Name, field.Value); err != nil {
-		return nil, fmt.Errorf("update %s field: %w", h.label, err)
+		return nil, err
 	}
 	objectCfg := TripObjectCfgByLabel(cfg, h.label)
 	replyMsg := BuildMsgWithKeyboard(msg.Chat.ID, cfg.Edited, BListAll(cfg, &objectCfg), cfg)

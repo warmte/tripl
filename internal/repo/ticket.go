@@ -624,3 +624,76 @@ func (r TicketRepository) GetPageByTripID(
 
 	return result, nil
 }
+
+func (r TicketRepository) GetForTime(
+	ctx context.Context,
+	userID int64,
+	start time.Time,
+	end time.Time,
+	page int,
+) ([]Ticket, error) {
+	if page < 0 {
+		return nil, fmt.Errorf("invalid page: %d", page)
+	}
+
+	offset := page * PageSize
+
+	rows, err := r.db.Query(ctx, `
+		SELECT
+			id,
+			user_id,
+			trip_id,
+			vehicle,
+			departure_point,
+			arrival_point,
+			departure_time,
+			arrival_time,
+			cost,
+			departure_address,
+			arrival_address,
+			seat,
+			comment
+		FROM tickets
+		WHERE user_id = $1
+		  AND departure_time >= $2
+		  AND departure_time < $3
+		ORDER BY departure_time ASC, id ASC
+		LIMIT $4 OFFSET $5
+	`, userID, start, end, PageSize+1, offset)
+	if err != nil {
+		return nil, fmt.Errorf("get tickets for time: %w", err)
+	}
+	defer rows.Close()
+
+	result := make([]Ticket, 0, PageSize+1)
+
+	for rows.Next() {
+		var ticket Ticket
+
+		if err := rows.Scan(
+			&ticket.ID,
+			&ticket.UserID,
+			&ticket.TripID,
+			&ticket.Vehicle,
+			&ticket.DeparturePoint,
+			&ticket.ArrivalPoint,
+			&ticket.DepartureTime,
+			&ticket.ArrivalTime,
+			&ticket.Cost,
+			&ticket.DepartureAddress,
+			&ticket.ArrivalAddress,
+			&ticket.Seat,
+			&ticket.Comment,
+		); err != nil {
+			return nil, fmt.Errorf("scan ticket: %w", err)
+		}
+
+		result = append(result, ticket)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate tickets: %w", err)
+	}
+
+	return result, nil
+}

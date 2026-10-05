@@ -69,8 +69,16 @@ func (s UserService) SetState(telegramID int64, newState State) {
 	}
 }
 
-func (s UserService) SetOrUpdateLang(ctx context.Context, telegramID int64, lang lang.Language) (*repo.User, error) {
+func (s UserService) SetOrUpdateLang(ctx context.Context, telegramID int64, lang lang.Language) (*User, error) {
 	s.SetState(telegramID, Default)
 	user, err := s.repo.UpdateLangOrCreate(ctx, telegramID, lang)
 	return user, err
+}
+
+func (s UserService) GetAll(ctx context.Context) ([]User, error) {
+	return s.repo.GetAll(ctx)
+}
+
+func (s UserService) GetLanguage(ctx context.Context, userID int64) (string, error) {
+	return s.repo.GetLanguage(ctx, userID)
 }

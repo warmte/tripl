@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"time"
 
 	. "github.com/warmte/tripl/common"
 	"github.com/warmte/tripl/internal/repo"
@@ -21,6 +22,7 @@ type Service[T TripObjectView] interface {
 	GetPageByTripID(ctx context.Context, tripID int64, userID int64, page int) (Page[T], error)
 	CountByTripID(ctx context.Context, tripID int64, userID int64) (int64, error)
 	GetCostsByTripID(ctx context.Context, tripID int64, userID int64) (map[string]float64, error)
+	GetPageForTime(ctx context.Context, userID int64, start time.Time, end time.Time, page int) (Page[T], error)
 }
 
 type CommonService[T TripObjectView] struct {
@@ -49,13 +51,13 @@ func (s CommonService[T]) GetActualPage(
 	userID int64,
 	page int,
 ) (Page[T], error) {
-	tickets, err := s.repo.GetActualPage(ctx, userID, page)
+	objects, err := s.repo.GetActualPage(ctx, userID, page)
 	if err != nil {
 		return Page[T]{},
 			fmt.Errorf("get actual page: %w", err)
 	}
 
-	return PreparePage(tickets), nil
+	return PreparePage(objects), nil
 }
 
 func (s CommonService[T]) GetArchivePage(
@@ -63,13 +65,13 @@ func (s CommonService[T]) GetArchivePage(
 	userID int64,
 	page int,
 ) (Page[T], error) {
-	tickets, err := s.repo.GetArchivePage(ctx, userID, page)
+	objects, err := s.repo.GetArchivePage(ctx, userID, page)
 	if err != nil {
 		return Page[T]{},
 			fmt.Errorf("get archive page: %w", err)
 	}
 
-	return PreparePage(tickets), nil
+	return PreparePage(objects), nil
 }
 
 func (s CommonService[T]) Create(ctx context.Context, data TripObjectView) (*T, error) {
@@ -186,10 +188,27 @@ func (s CommonService[T]) DetachFromTrip(
 	return nil
 }
 
-func (h CommonService[T]) GetCostsByTripID(ctx context.Context, tripID int64, userID int64) (map[string]float64, error) {
-	return h.repo.GetCostsByTripID(ctx, tripID, userID)
+func (s CommonService[T]) GetCostsByTripID(ctx context.Context, tripID int64, userID int64) (map[string]float64, error) {
+	return s.repo.GetCostsByTripID(ctx, tripID, userID)
 }
 
-func (h CommonService[T]) CountByTripID(ctx context.Context, tripID int64, userID int64) (int64, error) {
-	return h.repo.CountByTripID(ctx, tripID, userID)
+func (s CommonService[T]) CountByTripID(ctx context.Context, tripID int64, userID int64) (int64, error) {
+	return s.repo.CountByTripID(ctx, tripID, userID)
+}
+
+func (s CommonService[T]) GetPageForTime(
+	ctx context.Context,
+	userID int64,
+	start time.Time,
+	end time.Time,
+	page int,
+) (Page[T], error) {
+
+	objects, err := s.repo.GetForTime(ctx, userID, start, end, page)
+	if err != nil {
+		return Page[T]{},
+			fmt.Errorf("get actual page: %w", err)
+	}
+
+	return PreparePage(objects), nil
 }

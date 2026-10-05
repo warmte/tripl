@@ -13,6 +13,8 @@ var (
 	ErrIncorrectDateTime       = errors.New("incorrect datetime")
 	ErrIncorrectNumberOfFields = errors.New("incorrect number of fields")
 	ErrIncorrectInput          = errors.New("incorrect input")
+	ErrEmptyList               = errors.New("list is empty")
+	ErrDatetimeRestraint       = errors.New("datetime restraint")
 	ErrInternalError           = errors.New("internal error")
 )
 
@@ -33,7 +35,10 @@ func GetErrorMessage(err error, cfg lang.Cfg) string {
 	case ErrIncorrectNumberOfFields:
 		return cfg.Errors.IncorrectNumberOfFields
 
+	case ErrDatetimeRestraint:
+		return cfg.Errors.DatetimeRestraint
+
 	default:
-		return cfg.Errors.IncorrectInput
+		return cfg.Errors.InternalError
 	}
 }

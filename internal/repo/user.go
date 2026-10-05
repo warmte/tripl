@@ -4,21 +4,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	. "github.com/warmte/tripl/common"
 	"github.com/warmte/tripl/lang"
 )
 
 var ErrUserNotFound = errors.New("user not found")
-
-type User struct {
-	ID        int64
-	Language  string
-	CreatedAt time.Time
-}
 
 type UserRepository struct {
 	db *pgxpool.Pool
@@ -113,4 +107,66 @@ func (r *UserRepository) UpdateLangOrCreate(
 	}
 
 	return &user, nil
+}
+
+func (r UserRepository) GetAll(ctx context.Context) ([]User, error) {
+	rows, err := r.db.Query(
+		ctx,
+		`SELECT
+			id,
+			language,
+			created_at
+		FROM users
+		ORDER BY id`,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("get all users: %w", err)
+	}
+	defer rows.Close()
+
+	users := make([]User, 0)
+
+	for rows.Next() {
+		var user User
+
+		if err := rows.Scan(
+			&user.ID,
+			&user.Language,
+			&user.CreatedAt,
+		); err != nil {
+			return nil, fmt.Errorf("scan user: %w", err)
+		}
+
+		users = append(users, user)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate users: %w", err)
+	}
+
+	return users, nil
+}
+
+func (r UserRepository) GetLanguage(ctx context.Context, userID int64) (string, error) {
+	var language string
+
+	err := r.db.QueryRow(
+		ctx,
+		`
+		SELECT language
+		FROM users
+		WHERE id = $1
+		`,
+		userID,
+	).Scan(&language)
+
+	if errors.Is(err, pgx.ErrNoRows) {
+		return "", ErrUserNotFound
+	}
+
+	if err != nil {
+		return "", fmt.Errorf("get user language: %w", err)
+	}
+
+	return language, nil
 }

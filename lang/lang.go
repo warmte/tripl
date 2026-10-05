@@ -59,27 +59,29 @@ type ErrorsCfg struct {
 	IncorrectDatetime       string `json:"incorrect_datetime"`
 	IncorrectNumberOfFields string `json:"incorrect_number_of_fields"`
 	IncorrectInput          string `json:"incorrect_input"`
+	DatetimeRestraint       string `json:"datetime_restraint"`
 	InternalError           string `json:"internal_error"`
 }
 
 type Cfg struct {
-	Welcome     string         `json:"welcome"`
-	ChooseLang  string         `json:"choose_lang"`
-	Menu        string         `json:"menu"`
-	Add         string         `json:"add"`
-	Added       string         `json:"added"`
-	Info        string         `json:"info"`
-	Buttons     ButtonsCfg     `json:"buttons"`
-	TripObjects TripObjectsCfg `json:"trip_object"`
-	Errors      ErrorsCfg      `json:"errors"`
-	WhatEdit    string         `json:"what_edit"`
-	OnEdit      string         `json:"on_edit"`
-	OnEditReply string         `json:"on_edit_reply"`
-	Edited      string         `json:"edited"`
-	OnDelete    string         `json:"on_delete"`
-	Deleted     string         `json:"deleted"`
-	SpentFor    string         `json:"spent_for"`
-	SpentTotal  string         `json:"spent_total"`
+	Welcome       string         `json:"welcome"`
+	ChooseLang    string         `json:"choose_lang"`
+	Menu          string         `json:"menu"`
+	Add           string         `json:"add"`
+	Added         string         `json:"added"`
+	Info          string         `json:"info"`
+	Buttons       ButtonsCfg     `json:"buttons"`
+	TripObjects   TripObjectsCfg `json:"trip_object"`
+	Errors        ErrorsCfg      `json:"errors"`
+	WhatEdit      string         `json:"what_edit"`
+	OnEdit        string         `json:"on_edit"`
+	OnEditReply   string         `json:"on_edit_reply"`
+	Edited        string         `json:"edited"`
+	OnDelete      string         `json:"on_delete"`
+	Deleted       string         `json:"deleted"`
+	SpentFor      string         `json:"spent_for"`
+	SpentTotal    string         `json:"spent_total"`
+	TomorrowPlans string         `json:"tomorrow_plans"`
 }
 
 //go:embed cfg/ru.json
@@ -108,13 +110,13 @@ const (
 	LanguageEn Language = "en"
 )
 
-func Get(language Language) Cfg {
+func Get(language Language) *Cfg {
 	switch language {
 	case LanguageRu:
-		return RuCfg
+		return &RuCfg
 	case LanguageEn:
-		return EnCfg
+		return &EnCfg
 	default:
-		return EnCfg
+		return &RuCfg
 	}
 }

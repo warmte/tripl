@@ -359,5 +359,9 @@ func (r TripRepository) GetArchivePage(
 }
 
 func (r TripRepository) GetPageByTripID(ctx context.Context, tripID int64, userID int64, page int) ([]Trip, error) {
-	return nil, fmt.Errorf("unsopported: can't get trips by trip id")
+	return nil, fmt.Errorf("unsupported: can't get trips by trip id")
+}
+
+func (r TripRepository) GetForTime(ctx context.Context, userID int64, start time.Time, end time.Time, page int) ([]Trip, error) {
+	return nil, fmt.Errorf("unsupported: don't need trips for notifies")
 }

@@ -17,51 +17,43 @@ import (
 
 type Bot struct {
 	api             *tgbotapi.BotAPI
-	langCfg         *lang.Cfg
 	ctx             context.Context
 	userService     *service.UserService
-	ticketsService  *service.TicketService
-	bookingsService *service.BookingService
-	eventsService   *service.EventService
-	tripsService    *service.TripService
 	callbackHandler *handler.CallbackHandler
 	handlers        *handler.Handlers
 }
 
 func NewBot(
-	botId string,
+	api *tgbotapi.BotAPI,
 	ctx context.Context,
 	userService *service.UserService,
-	ticketsService *service.TicketService,
-	bookingsService *service.BookingService,
-	eventsService *service.EventService,
-	tripsService *service.TripService,
 	callbackHandler *handler.CallbackHandler,
 	handlers *handler.Handlers,
-) (*Bot, error) {
-	api, err := tgbotapi.NewBotAPI(botId)
-	if err != nil {
-		return nil, err
+) *Bot {
+	return &Bot{api, ctx, userService, callbackHandler, handlers}
+}
+
+func (bot Bot) getLangCfg(userID int64) *lang.Cfg {
+	language, err := bot.userService.GetLanguage(bot.ctx, userID)
+	if err == nil && lang.Language(language) == lang.LanguageEn {
+		return lang.Get(lang.LanguageEn)
 	} else {
-		langCfg := lang.Get(lang.LanguageRu)
-		return &Bot{api, &langCfg, ctx, userService, ticketsService, bookingsService, eventsService, tripsService, callbackHandler, handlers}, nil
+		return lang.Get(lang.LanguageRu)
 	}
 }
 
-func (bot Bot) replyWithKeyboard(chatId int64, text string, buttons [][]string) {
-	raws := BuildKeyboard(buttons, bot.langCfg)
-	replyMsg := tgbotapi.NewMessage(chatId, lang.EscapeMarkdownV2(text))
+func (bot Bot) replyWithKeyboard(userID int64, text string, buttons [][]string) {
+	raws := BuildKeyboard(buttons, bot.getLangCfg(userID))
+	replyMsg := tgbotapi.NewMessage(userID, lang.EscapeMarkdownV2(text))
 	replyMsg.ReplyMarkup = tgbotapi.NewReplyKeyboard(raws...)
 	replyMsg.ParseMode = tgbotapi.ModeMarkdownV2
 	bot.api.Send(replyMsg)
 }
 
-func (bot Bot) replyForIncorrectInput(chatId int64, err error) {
-	bot.replyWithKeyboard(chatId, GetErrorMessage(err, *bot.langCfg), [][]string{{bot.langCfg.Buttons.Cancel}})
-}
-
-func (bot Bot) replyForInternalError(chatId int64) {
-	bot.replyWithKeyboard(chatId, bot.langCfg.Errors.InternalError, [][]string{{bot.langCfg.Buttons.Cancel}})
+func (bot Bot) replyForError(userID int64, err error) {
+	langCfg := bot.getLangCfg(userID)
+	bot.replyWithKeyboard(userID, GetErrorMessage(err, *langCfg), [][]string{{langCfg.Buttons.Cancel}})
+	log.Printf("internal error: %v", err)
 }
 
 func (bot Bot) matchByText(msg *tgbotapi.Message, matchCmd string, matchValues []string) bool {
@@ -94,15 +86,16 @@ func (bot Bot) matchListObjects(
 		fmt.Sprintf("%s_%s", ActualListType, tripObject.Label),
 		[]string{tripObject.Cfg.Many, tripObject.Cfg.Actual},
 	) {
-		newMsg, err := bot.handlers.ShowListFor(tripObject.Label, bot.ctx, msg.Chat.ID, ActualListType, bot.langCfg)
+		langCfg := bot.getLangCfg(msg.Chat.ID)
+		newMsg, err := bot.handlers.ShowListFor(tripObject.Label, bot.ctx, msg.Chat.ID, ActualListType, langCfg)
 		if err == nil {
 			bot.api.Send(*newMsg)
 		}
 
 		bot.replyWithKeyboard(
 			msg.Chat.ID,
-			fmt.Sprintf("%s. %s", tripObject.Cfg.Actual, bot.langCfg.Info),
-			[][]string{{tripObject.Cfg.Archive, bot.langCfg.Buttons.Back}})
+			fmt.Sprintf("%s. %s", tripObject.Cfg.Actual, langCfg.Info),
+			[][]string{{tripObject.Cfg.Archive, langCfg.Buttons.Back}})
 
 		return true
 	}
@@ -112,15 +105,16 @@ func (bot Bot) matchListObjects(
 		fmt.Sprintf("%s_%s", ArchiveListType, tripObject.Label),
 		[]string{tripObject.Cfg.Many, tripObject.Cfg.Archive},
 	) {
-		newMsg, err := bot.handlers.ShowListFor(tripObject.Label, bot.ctx, msg.Chat.ID, ArchiveListType, bot.langCfg)
+		langCfg := bot.getLangCfg(msg.Chat.ID)
+		newMsg, err := bot.handlers.ShowListFor(tripObject.Label, bot.ctx, msg.Chat.ID, ArchiveListType, langCfg)
 		if err == nil {
 			bot.api.Send(*newMsg)
 		}
 
 		bot.replyWithKeyboard(
 			msg.Chat.ID,
-			fmt.Sprintf("%s. %s", tripObject.Cfg.Archive, bot.langCfg.Info),
-			[][]string{{tripObject.Cfg.Actual, bot.langCfg.Buttons.Back}})
+			fmt.Sprintf("%s. %s", tripObject.Cfg.Archive, langCfg.Info),
+			[][]string{{tripObject.Cfg.Actual, langCfg.Buttons.Back}})
 
 		return true
 	}
@@ -130,36 +124,40 @@ func (bot Bot) matchListObjects(
 
 func (bot Bot) matchShowSingle(msg *tgbotapi.Message) bool {
 	if bot.matchByCmd(msg, "tt") {
+		langCfg := bot.getLangCfg(msg.Chat.ID)
 		id := bot.parseByCmd(msg, "tt")
 		if id != -1 {
-			newMsg, err := bot.handlers.TicketHandler.ShowSingle(bot.ctx, msg.Chat.ID, int64(id), bot.langCfg)
+			newMsg, err := bot.handlers.TicketHandler.ShowSingle(bot.ctx, msg.Chat.ID, int64(id), langCfg)
 			if err == nil {
 				bot.api.Send(*newMsg)
 			}
 		}
 		return true
 	} else if bot.matchByCmd(msg, "bk") {
+		langCfg := bot.getLangCfg(msg.Chat.ID)
 		id := bot.parseByCmd(msg, "bk")
 		if id != -1 {
-			newMsg, err := bot.handlers.BookingHandler.ShowSingle(bot.ctx, msg.Chat.ID, int64(id), bot.langCfg)
+			newMsg, err := bot.handlers.BookingHandler.ShowSingle(bot.ctx, msg.Chat.ID, int64(id), langCfg)
 			if err == nil {
 				bot.api.Send(*newMsg)
 			}
 		}
 		return true
 	} else if bot.matchByCmd(msg, "ev") {
+		langCfg := bot.getLangCfg(msg.Chat.ID)
 		id := bot.parseByCmd(msg, "ev")
 		if id != -1 {
-			newMsg, err := bot.handlers.EventHandler.ShowSingle(bot.ctx, msg.Chat.ID, int64(id), bot.langCfg)
+			newMsg, err := bot.handlers.EventHandler.ShowSingle(bot.ctx, msg.Chat.ID, int64(id), langCfg)
 			if err == nil {
 				bot.api.Send(*newMsg)
 			}
 		}
 		return true
 	} else if bot.matchByCmd(msg, "tr") {
+		langCfg := bot.getLangCfg(msg.Chat.ID)
 		id := bot.parseByCmd(msg, "tr")
 		if id != -1 {
-			newMsg, err := bot.handlers.TripHandler.ShowSingle(bot.ctx, msg.Chat.ID, int64(id), bot.langCfg)
+			newMsg, err := bot.handlers.TripHandler.ShowSingle(bot.ctx, msg.Chat.ID, int64(id), langCfg)
 			if err == nil {
 				bot.api.Send(*newMsg)
 			}
@@ -171,10 +169,11 @@ func (bot Bot) matchShowSingle(msg *tgbotapi.Message) bool {
 
 func (bot Bot) matchAddMainFieldsObject(msg *tgbotapi.Message, tripObject *TripObject) bool {
 	if bot.matchByText(msg, fmt.Sprintf("add_%s", tripObject.Label), []string{tripObject.Cfg.One}) {
+		langCfg := bot.getLangCfg(msg.Chat.ID)
 		bot.replyWithKeyboard(
 			msg.Chat.ID,
 			fmt.Sprintf("%s\n\n- %s\n\n%s", tripObject.Cfg.AddMainFields, strings.Join(tripObject.Cfg.MainFields, "\n- "), tripObject.Cfg.AddExample.Main),
-			[][]string{{bot.langCfg.Buttons.Cancel}})
+			[][]string{{langCfg.Buttons.Cancel}})
 		bot.userService.SetState(msg.Chat.ID, service.AddInfo.For(string(tripObject.Label)))
 		return true
 	}
@@ -186,13 +185,14 @@ func (bot Bot) matchAddOtherFieldsObject(msg *tgbotapi.Message, tripObject *Trip
 	if bot.matchByStage(msg, possibleCurrentStage) {
 		mainFieldsParsed, err := selectMainFieldsParser(msg.Text, tripObject.Label, msg.Chat.ID)
 		if err != nil {
-			bot.replyForIncorrectInput(msg.Chat.ID, err)
+			bot.replyForError(msg.Chat.ID, err)
 			return true
 		}
+		langCfg := bot.getLangCfg(msg.Chat.ID)
 		bot.replyWithKeyboard(
 			msg.Chat.ID,
 			fmt.Sprintf("%s\n\n- %s\n\n%s\n\n%s", tripObject.Cfg.AddOtherFields, strings.Join(tripObject.Cfg.OtherFields, "\n- "), tripObject.Cfg.AddExample.Other, tripObject.Cfg.AddOtherFieldsTips),
-			[][]string{{bot.langCfg.Buttons.Skip, bot.langCfg.Buttons.Cancel}})
+			[][]string{{langCfg.Buttons.Skip, langCfg.Buttons.Cancel}})
 		bot.userService.SetState(msg.Chat.ID, service.Added.For(string(tripObject.Label)).With(mainFieldsParsed))
 		return true
 	}
@@ -202,15 +202,16 @@ func (bot Bot) matchAddOtherFieldsObject(msg *tgbotapi.Message, tripObject *Trip
 func (bot Bot) matchAddedObject(msg *tgbotapi.Message, tripObject *TripObject) bool {
 	possibleCurrentStage := service.Added.For(string(tripObject.Label)).Stage
 	if bot.matchByStage(msg, possibleCurrentStage) {
+		langCfg := bot.getLangCfg(msg.Chat.ID)
 		currentContext := bot.userService.GetState(msg.Chat.ID).Context
-		if msg.Text != bot.langCfg.Buttons.Skip {
+		if msg.Text != langCfg.Buttons.Skip {
 			otherFieldsParsed, err := selectOtherFieldsParser(msg.Text, tripObject.Label, currentContext)
 			if err == ErrInternalError {
-				bot.replyForInternalError(msg.Chat.ID)
+				bot.replyForError(msg.Chat.ID, err)
 				return true
 			}
 			if err != nil {
-				bot.replyForIncorrectInput(msg.Chat.ID, err)
+				bot.replyForError(msg.Chat.ID, err)
 				return true
 			}
 			currentContext = otherFieldsParsed
@@ -219,20 +220,20 @@ func (bot Bot) matchAddedObject(msg *tgbotapi.Message, tripObject *TripObject) b
 		added, err := bot.handlers.AddFor(tripObject.Label, bot.ctx, currentContext)
 
 		if err != nil {
-			bot.replyForInternalError(msg.Chat.ID)
+			bot.replyForError(msg.Chat.ID, err)
 			return true
 		}
-		showAdded, err := bot.handlers.ShowSingleFor(bot.ctx, tripObject.Label, added.GetID(), msg.Chat.ID, bot.langCfg)
+		showAdded, err := bot.handlers.ShowSingleFor(bot.ctx, tripObject.Label, added.GetID(), msg.Chat.ID, langCfg)
 		if err != nil {
-			bot.replyForInternalError(msg.Chat.ID)
+			bot.replyForError(msg.Chat.ID, err)
 			return true
 		}
 		bot.api.Send(*showAdded)
-		bot.replyWithKeyboard(msg.Chat.ID, fmt.Sprintf("%s", bot.langCfg.Added),
+		bot.replyWithKeyboard(msg.Chat.ID, fmt.Sprintf("%s", langCfg.Added),
 			[][]string{
-				{bot.langCfg.Buttons.Add},
-				{bot.langCfg.TripObjects.Ticket.Many, bot.langCfg.TripObjects.Booking.Many, bot.langCfg.TripObjects.Event.Many, bot.langCfg.TripObjects.Trip.Many},
-				{bot.langCfg.Buttons.Settings},
+				{langCfg.Buttons.Add},
+				{langCfg.TripObjects.Ticket.Many, langCfg.TripObjects.Booking.Many, langCfg.TripObjects.Event.Many, langCfg.TripObjects.Trip.Many},
+				{langCfg.Buttons.Settings},
 			})
 		bot.userService.SetState(msg.Chat.ID, service.Default)
 		return true
@@ -250,9 +251,9 @@ func (bot *Bot) Run() {
 
 	updates := bot.api.GetUpdatesChan(u)
 
-	tripObjects := TripObjects(bot.langCfg)
-	processTripObjects := func(f func(to TripObject) bool) bool {
+	processTripObjects := func(langCfg *lang.Cfg, f func(to TripObject) bool) bool {
 		result := false
+		tripObjects := TripObjects(langCfg)
 		for _, to := range tripObjects {
 			result = result || f(to)
 		}
@@ -271,10 +272,11 @@ func (bot *Bot) Run() {
 				log.Printf("callback answer: %v", err)
 			}
 
+			langCfg := bot.getLangCfg(callback.From.ID)
 			edits, err := bot.callbackHandler.Handle(
 				bot.ctx,
 				callback,
-				bot.langCfg,
+				langCfg,
 			)
 			if err != nil {
 				log.Printf("callback: %v", err)
@@ -292,63 +294,60 @@ func (bot *Bot) Run() {
 			{
 				msg := update.Message
 				log.Printf("[%s] %s", msg.From.UserName, msg.Text)
+				langCfg := bot.getLangCfg(msg.Chat.ID)
 				if msg.ReplyToMessage != nil {
 					{
 						message, err := bot.handlers.HandleEditReply(
 							bot.ctx,
 							update.Message,
-							bot.langCfg,
+							langCfg,
 						)
 						if err != nil {
-							bot.replyForInternalError(update.Message.Chat.ID)
+							bot.replyForError(update.Message.Chat.ID, err)
 						} else {
 							if message != nil {
 								if _, err := bot.api.Send(message); err != nil {
-									bot.replyForInternalError(update.Message.Chat.ID)
+									bot.replyForError(update.Message.Chat.ID, err)
 								}
 							}
 						}
 					}
-				} else if bot.matchByText(msg, "menu", []string{bot.langCfg.Buttons.Back, bot.langCfg.Buttons.Cancel}) {
+				} else if bot.matchByText(msg, "menu", []string{langCfg.Buttons.Back, langCfg.Buttons.Cancel}) {
 					bot.userService.SetState(msg.Chat.ID, service.Default)
-					bot.replyWithKeyboard(msg.Chat.ID, bot.langCfg.Menu, BMain(bot.langCfg))
-				} else if bot.matchByText(msg, "settings", []string{bot.langCfg.Buttons.Settings}) {
+					bot.replyWithKeyboard(msg.Chat.ID, langCfg.Menu, BMain(langCfg))
+				} else if bot.matchByText(msg, "settings", []string{langCfg.Buttons.Settings}) {
 					bot.userService.SetState(msg.Chat.ID, service.Default)
-					bot.replyWithKeyboard(msg.Chat.ID, bot.langCfg.Menu, [][]string{{bot.langCfg.Buttons.Lang.Lang, bot.langCfg.Buttons.Back}})
-				} else if bot.matchByText(msg, "add", []string{bot.langCfg.Buttons.Add}) {
+					bot.replyWithKeyboard(msg.Chat.ID, langCfg.Menu, [][]string{{langCfg.Buttons.Lang.Lang, langCfg.Buttons.Back}})
+				} else if bot.matchByText(msg, "add", []string{langCfg.Buttons.Add}) {
 					bot.userService.SetState(msg.Chat.ID, service.Default)
 					bot.replyWithKeyboard(
 						msg.Chat.ID,
-						bot.langCfg.Add,
-						[][]string{{bot.langCfg.TripObjects.Ticket.One, bot.langCfg.TripObjects.Booking.One, bot.langCfg.TripObjects.Event.One, bot.langCfg.TripObjects.Trip.One}, {bot.langCfg.Buttons.Back}})
-				} else if processTripObjects(func(tripObject TripObject) bool { return bot.matchListObjects(msg, &tripObject) }) {
-				} else if processTripObjects(func(tripObject TripObject) bool { return bot.matchAddMainFieldsObject(msg, &tripObject) }) {
-				} else if processTripObjects(func(tripObject TripObject) bool { return bot.matchAddOtherFieldsObject(msg, &tripObject) }) {
-				} else if processTripObjects(func(tripObject TripObject) bool { return bot.matchAddedObject(msg, &tripObject) }) {
+						langCfg.Add,
+						[][]string{{langCfg.TripObjects.Ticket.One, langCfg.TripObjects.Booking.One, langCfg.TripObjects.Event.One, langCfg.TripObjects.Trip.One}, {langCfg.Buttons.Back}})
+				} else if processTripObjects(langCfg, func(tripObject TripObject) bool { return bot.matchListObjects(msg, &tripObject) }) {
+				} else if processTripObjects(langCfg, func(tripObject TripObject) bool { return bot.matchAddMainFieldsObject(msg, &tripObject) }) {
+				} else if processTripObjects(langCfg, func(tripObject TripObject) bool { return bot.matchAddOtherFieldsObject(msg, &tripObject) }) {
+				} else if processTripObjects(langCfg, func(tripObject TripObject) bool { return bot.matchAddedObject(msg, &tripObject) }) {
 				} else if bot.matchByText(msg, "start", []string{}) {
 					bot.userService.SetState(msg.Chat.ID, service.Default)
 					bot.replyWithKeyboard(
 						msg.Chat.ID,
-						fmt.Sprintf("%s\n\n%s", bot.langCfg.Welcome, bot.langCfg.ChooseLang),
+						fmt.Sprintf("%s\n\n%s", langCfg.Welcome, langCfg.ChooseLang),
 						[][]string{
-							{bot.langCfg.Buttons.Lang.Ru, bot.langCfg.Buttons.Lang.En}})
-				} else if bot.matchByText(msg, "lang", []string{bot.langCfg.Buttons.Lang.Lang}) {
+							{langCfg.Buttons.Lang.Ru, langCfg.Buttons.Lang.En}})
+				} else if bot.matchByText(msg, "lang", []string{langCfg.Buttons.Lang.Lang}) {
 					bot.userService.SetState(msg.Chat.ID, service.Default)
 					bot.replyWithKeyboard(
 						msg.Chat.ID,
-						bot.langCfg.ChooseLang,
+						langCfg.ChooseLang,
 						[][]string{
-							{bot.langCfg.Buttons.Lang.Ru, bot.langCfg.Buttons.Lang.En}})
-				} else if bot.matchByText(msg, "ru", []string{bot.langCfg.Buttons.Lang.Ru}) {
+							{langCfg.Buttons.Lang.Ru, langCfg.Buttons.Lang.En}})
+				} else if bot.matchByText(msg, "ru", []string{langCfg.Buttons.Lang.Ru}) {
 					bot.userService.SetOrUpdateLang(bot.ctx, msg.Chat.ID, lang.LanguageRu)
-					newCfg := lang.Get(lang.LanguageRu)
-					bot.langCfg = &newCfg
-					bot.replyWithKeyboard(msg.Chat.ID, bot.langCfg.Menu, BMain(bot.langCfg))
-				} else if bot.matchByText(msg, "en", []string{bot.langCfg.Buttons.Lang.En}) {
+					bot.replyWithKeyboard(msg.Chat.ID, langCfg.Menu, BMain(langCfg))
+				} else if bot.matchByText(msg, "en", []string{langCfg.Buttons.Lang.En}) {
 					bot.userService.SetOrUpdateLang(bot.ctx, msg.Chat.ID, lang.LanguageEn)
-					newCfg := lang.Get(lang.LanguageEn)
-					bot.langCfg = &newCfg
-					bot.replyWithKeyboard(msg.Chat.ID, bot.langCfg.Menu, BMain(bot.langCfg))
+					bot.replyWithKeyboard(msg.Chat.ID, langCfg.Menu, BMain(langCfg))
 				} else if bot.matchShowSingle(msg) {
 				} else {
 					msg := tgbotapi.NewMessage(update.Message.Chat.ID, "unknown command")
