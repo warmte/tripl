@@ -33,6 +33,7 @@ type Repository[T any] interface {
 	CountByTripID(ctx context.Context, tripID int64, userID int64) (int64, error)
 	GetCostsByTripID(ctx context.Context, tripID int64, userID int64) (map[string]float64, error)
 	GetForTime(ctx context.Context, userID int64, start time.Time, end time.Time, page int) ([]T, error)
+	CountByUserID(ctx context.Context, userID int64) (int64, error)
 }
 
 type BasicRepository struct {
@@ -208,4 +209,26 @@ func (r BasicRepository) GetCostsByTripID(
 	}
 
 	return result, nil
+}
+
+func (r BasicRepository) CountByUserID(
+	ctx context.Context,
+	userID int64,
+) (int64, error) {
+	var count int64
+
+	err := r.db.QueryRow(
+		ctx,
+		fmt.Sprintf(`
+		SELECT COUNT(*)
+		FROM %s
+		WHERE user_id = $1
+		`, r.repoType),
+		userID,
+	).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("count by user id: %w", err)
+	}
+
+	return count, nil
 }

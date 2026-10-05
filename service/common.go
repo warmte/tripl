@@ -23,6 +23,7 @@ type Service[T TripObjectView] interface {
 	CountByTripID(ctx context.Context, tripID int64, userID int64) (int64, error)
 	GetCostsByTripID(ctx context.Context, tripID int64, userID int64) (map[string]float64, error)
 	GetPageForTime(ctx context.Context, userID int64, start time.Time, end time.Time, page int) (Page[T], error)
+	CountByUserID(ctx context.Context, userID int64) (int64, error)
 }
 
 type CommonService[T TripObjectView] struct {
@@ -211,4 +212,8 @@ func (s CommonService[T]) GetPageForTime(
 	}
 
 	return PreparePage(objects), nil
+}
+
+func (s CommonService[T]) CountByUserID(ctx context.Context, userID int64) (int64, error) {
+	return s.repo.CountByUserID(ctx, userID)
 }

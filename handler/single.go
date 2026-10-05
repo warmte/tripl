@@ -9,6 +9,10 @@ import (
 	"github.com/warmte/tripl/lang"
 )
 
+func (h CommonHandler[T]) Count(ctx context.Context, userID int64) (int64, error) {
+	return h.service.CountByUserID(ctx, userID)
+}
+
 func (h CommonHandler[T]) Add(ctx context.Context, data TripObjectView) (*T, error) {
 	return h.service.Create(ctx, data)
 }

@@ -153,6 +153,21 @@ func (h *Handlers) AddFor(label Label, ctx context.Context, data TripObjectView)
 	}
 }
 
+func (h *Handlers) CountFor(label Label, ctx context.Context, userID int64) (int64, error) {
+	switch label {
+	case TicketLabel:
+		return h.TicketHandler.Count(ctx, userID)
+	case BookingLabel:
+		return h.BookingHandler.Count(ctx, userID)
+	case EventLabel:
+		return h.EventHandler.Count(ctx, userID)
+	case TripLabel:
+		return h.TripHandler.Count(ctx, userID)
+	default:
+		return 0, ErrIncorrectInput
+	}
+}
+
 func (h *Handlers) HandleEditReply(
 	ctx context.Context,
 	msg *tgbotapi.Message,

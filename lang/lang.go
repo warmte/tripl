@@ -60,6 +60,7 @@ type ErrorsCfg struct {
 	IncorrectNumberOfFields string `json:"incorrect_number_of_fields"`
 	IncorrectInput          string `json:"incorrect_input"`
 	DatetimeRestraint       string `json:"datetime_restraint"`
+	ObjectsLimit            string `json:"objects_limit"`
 	InternalError           string `json:"internal_error"`
 }
 
