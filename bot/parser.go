@@ -61,11 +61,11 @@ func parseTicketMainFields(input string, userID int64) (Ticket, error) {
 
 	return Ticket{
 		UserID:         userID,
-		Vehicle:        lines[0],
-		DeparturePoint: lines[1],
-		ArrivalPoint:   lines[2],
-		DepartureTime:  *departureTime,
-		ArrivalTime:    *arrivalTime,
+		Vehicle:        &lines[0],
+		DeparturePoint: &lines[1],
+		ArrivalPoint:   &lines[2],
+		DepartureTime:  departureTime,
+		ArrivalTime:    arrivalTime,
 	}, nil
 }
 
@@ -115,10 +115,10 @@ func parseBookingMainFields(input string, userID int64) (Booking, error) {
 
 	return Booking{
 		UserID:       userID,
-		City:         lines[0],
-		Place:        lines[1],
-		CheckInDate:  *checkInDate,
-		CheckOutDate: *checkOutDate,
+		City:         &lines[0],
+		Place:        &lines[1],
+		CheckInDate:  checkInDate,
+		CheckOutDate: checkOutDate,
 	}, nil
 }
 
@@ -172,9 +172,9 @@ func parseEventMainFields(input string, userID int64) (Event, error) {
 
 	return Event{
 		UserID:    userID,
-		Name:      lines[0],
-		Location:  lines[1],
-		StartTime: *startTime,
+		Name:      &lines[0],
+		Location:  &lines[1],
+		StartTime: startTime,
 	}, nil
 }
 

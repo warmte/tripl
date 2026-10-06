@@ -79,6 +79,11 @@ func (s UserService) GetAll(ctx context.Context) ([]User, error) {
 	return s.repo.GetAll(ctx)
 }
 
-func (s UserService) GetLanguage(ctx context.Context, userID int64) (string, error) {
-	return s.repo.GetLanguage(ctx, userID)
+func (s UserService) GetLanguage(ctx context.Context, userID int64) *lang.Cfg {
+	language, err := s.repo.GetLanguage(ctx, userID)
+	if err == nil && lang.Language(language) == lang.LanguageEn {
+		return lang.Get(lang.LanguageEn)
+	} else {
+		return lang.Get(lang.LanguageRu)
+	}
 }

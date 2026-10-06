@@ -74,11 +74,11 @@ type Ticket struct {
 	ID               int64
 	UserID           int64
 	TripID           *int64
-	Vehicle          string
-	DeparturePoint   string
-	ArrivalPoint     string
-	DepartureTime    time.Time
-	ArrivalTime      time.Time
+	Vehicle          *string
+	DeparturePoint   *string
+	ArrivalPoint     *string
+	DepartureTime    *time.Time
+	ArrivalTime      *time.Time
 	Cost             *string
 	Currency         *string
 	DepartureAddress *string
@@ -92,10 +92,10 @@ type Booking struct {
 	ID           int64
 	UserID       int64
 	TripID       *int64
-	City         string
-	Place        string
-	CheckInDate  time.Time
-	CheckOutDate time.Time
+	City         *string
+	Place        *string
+	CheckInDate  *time.Time
+	CheckOutDate *time.Time
 	Cost         *string
 	Currency     *string
 	Address      *string
@@ -109,9 +109,9 @@ type Event struct {
 	ID        int64
 	UserID    int64
 	TripID    *int64
-	Name      string
-	Location  string
-	StartTime time.Time
+	Name      *string
+	Location  *string
+	StartTime *time.Time
 	EndTime   *time.Time
 	Cost      *string
 	Currency  *string
@@ -148,35 +148,39 @@ func addField(lines *[]string, name string, value *string) {
 func (f Ticket) Show(cfg *lang.TripObjectCfg) string {
 	var lines []string
 
-	addStringField(
+	addField(
 		&lines,
 		cfg.MainFields[0],
 		f.Vehicle,
 	)
 
-	addStringField(
+	addField(
 		&lines,
 		cfg.MainFields[1],
 		f.DeparturePoint,
 	)
 
-	addStringField(
+	addField(
 		&lines,
 		cfg.MainFields[2],
 		f.ArrivalPoint,
 	)
 
-	addStringField(
-		&lines,
-		cfg.MainFields[3],
-		f.DepartureTime.Format(DatetimeLayout),
-	)
+	if f.DepartureTime != nil {
+		addStringField(
+			&lines,
+			cfg.MainFields[3],
+			f.DepartureTime.Format(DatetimeLayout),
+		)
+	}
 
-	addStringField(
-		&lines,
-		cfg.MainFields[4],
-		f.ArrivalTime.Format(DatetimeLayout),
-	)
+	if f.ArrivalTime != nil {
+		addStringField(
+			&lines,
+			cfg.MainFields[4],
+			f.ArrivalTime.Format(DatetimeLayout),
+		)
+	}
 
 	addField(
 		&lines,
@@ -226,29 +230,33 @@ func (f Ticket) Show(cfg *lang.TripObjectCfg) string {
 func (f Booking) Show(cfg *lang.TripObjectCfg) string {
 	var lines []string
 
-	addStringField(
+	addField(
 		&lines,
 		cfg.MainFields[0],
 		f.City,
 	)
 
-	addStringField(
+	addField(
 		&lines,
 		cfg.MainFields[1],
 		f.Place,
 	)
 
-	addStringField(
-		&lines,
-		cfg.MainFields[2],
-		f.CheckInDate.Format(DateLayout),
-	)
+	if f.CheckInDate != nil {
+		addStringField(
+			&lines,
+			cfg.MainFields[2],
+			f.CheckInDate.Format(DateLayout),
+		)
+	}
 
-	addStringField(
-		&lines,
-		cfg.MainFields[3],
-		f.CheckOutDate.Format(DateLayout),
-	)
+	if f.CheckOutDate != nil {
+		addStringField(
+			&lines,
+			cfg.MainFields[3],
+			f.CheckOutDate.Format(DateLayout),
+		)
+	}
 
 	addField(
 		&lines,
@@ -302,23 +310,25 @@ func (f Booking) Show(cfg *lang.TripObjectCfg) string {
 func (f Event) Show(cfg *lang.TripObjectCfg) string {
 	var lines []string
 
-	addStringField(
+	addField(
 		&lines,
 		cfg.MainFields[0],
 		f.Name,
 	)
 
-	addStringField(
+	addField(
 		&lines,
 		cfg.MainFields[1],
 		f.Location,
 	)
 
-	addStringField(
-		&lines,
-		cfg.MainFields[2],
-		f.StartTime.Format(DatetimeLayout),
-	)
+	if f.StartTime != nil {
+		addStringField(
+			&lines,
+			cfg.MainFields[2],
+			f.StartTime.Format(DatetimeLayout),
+		)
+	}
 
 	if f.EndTime != nil {
 		addStringField(

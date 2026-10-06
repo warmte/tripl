@@ -16,6 +16,9 @@ var (
 	ErrEmptyList               = errors.New("list is empty")
 	ErrDatetimeRestraint       = errors.New("datetime restraint")
 	ErrInternalError           = errors.New("internal error")
+	ErrIncorrectFileFormat     = errors.New("uploaded file is not a PDF")
+	ErrTooLargeFile            = errors.New("uploaded file is too large")
+	ErrEmptyFile               = errors.New("File contains no text")
 )
 
 func GetErrorMessage(err error, cfg lang.Cfg) string {
@@ -37,6 +40,15 @@ func GetErrorMessage(err error, cfg lang.Cfg) string {
 
 	case ErrDatetimeRestraint:
 		return cfg.Errors.DatetimeRestraint
+
+	case ErrIncorrectFileFormat:
+		return cfg.Errors.IncorrectFileFormat
+
+	case ErrTooLargeFile:
+		return cfg.Errors.TooLargeFile
+
+	case ErrEmptyFile:
+		return cfg.Errors.EmptyFile
 
 	default:
 		return cfg.Errors.InternalError

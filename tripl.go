@@ -6,7 +6,9 @@ import (
 	"os"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/warmte/tripl/ai"
 	"github.com/warmte/tripl/bot"
+	"github.com/warmte/tripl/document"
 	"github.com/warmte/tripl/handler"
 	"github.com/warmte/tripl/internal/db"
 	"github.com/warmte/tripl/internal/repo"
@@ -49,14 +51,24 @@ func main() {
 		log.Panic("err create api: %w", err)
 	}
 
-	b := bot.NewBot(api, ctx, userService, callbackHandler, handlers)
+	aiService := ai.NewAIService(
+		"http://localhost:8080/v1/chat/completions",
+		"Qwen3-1.7B-Q8_0.gguf",
+	)
+	pdfService := document.NewPDFService(api)
+	pdfParser := document.NewPDFParser()
+
+	documentHandler := handler.NewDocumentHandler(api, pdfService, pdfParser, aiService, userService, ticketsHandler, bookingsHandler, eventsHandler)
+
+	b := bot.NewBot(api, ctx, userService, callbackHandler, documentHandler, handlers)
 
 	notificationSender := scheduler.NewNotificationSender(api, userService, ticketsHandler, bookingsHandler, eventsHandler)
-	sched, err := scheduler.New(*notificationSender)
+	notificationScheduler, err := scheduler.New(*notificationSender)
 	if err != nil {
 		log.Panic("err create scheduler: %w", err)
 	}
 
-	go sched.Run(ctx)
+	go notificationScheduler.Run(ctx)
+	go documentHandler.Run(ctx)
 	b.Run()
 }

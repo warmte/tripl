@@ -62,27 +62,34 @@ type ErrorsCfg struct {
 	DatetimeRestraint       string `json:"datetime_restraint"`
 	ObjectsLimit            string `json:"objects_limit"`
 	InternalError           string `json:"internal_error"`
+	IncorrectFileFormat     string `json:"incorrect_file_format"`
+	TooLargeFile            string `json:"too_large_file"`
+	EmptyFile               string `json:"empty_file"`
+	DocumentFailed          string `json:"document_failed"`
 }
 
 type Cfg struct {
-	Welcome       string         `json:"welcome"`
-	ChooseLang    string         `json:"choose_lang"`
-	Menu          string         `json:"menu"`
-	Add           string         `json:"add"`
-	Added         string         `json:"added"`
-	Info          string         `json:"info"`
-	Buttons       ButtonsCfg     `json:"buttons"`
-	TripObjects   TripObjectsCfg `json:"trip_object"`
-	Errors        ErrorsCfg      `json:"errors"`
-	WhatEdit      string         `json:"what_edit"`
-	OnEdit        string         `json:"on_edit"`
-	OnEditReply   string         `json:"on_edit_reply"`
-	Edited        string         `json:"edited"`
-	OnDelete      string         `json:"on_delete"`
-	Deleted       string         `json:"deleted"`
-	SpentFor      string         `json:"spent_for"`
-	SpentTotal    string         `json:"spent_total"`
-	TomorrowPlans string         `json:"tomorrow_plans"`
+	Welcome           string         `json:"welcome"`
+	ChooseLang        string         `json:"choose_lang"`
+	Menu              string         `json:"menu"`
+	Add               string         `json:"add"`
+	Added             string         `json:"added"`
+	AddAsFile         string         `json:"add_as_file"`
+	Info              string         `json:"info"`
+	Buttons           ButtonsCfg     `json:"buttons"`
+	TripObjects       TripObjectsCfg `json:"trip_object"`
+	Errors            ErrorsCfg      `json:"errors"`
+	WhatEdit          string         `json:"what_edit"`
+	OnEdit            string         `json:"on_edit"`
+	OnEditReply       string         `json:"on_edit_reply"`
+	Edited            string         `json:"edited"`
+	OnDelete          string         `json:"on_delete"`
+	Deleted           string         `json:"deleted"`
+	SpentFor          string         `json:"spent_for"`
+	SpentTotal        string         `json:"spent_total"`
+	TomorrowPlans     string         `json:"tomorrow_plans"`
+	DocumentInProcess string         `json:"document_in_process"`
+	DocumentFinished  string         `json:"document_finished"`
 }
 
 //go:embed cfg/ru.json

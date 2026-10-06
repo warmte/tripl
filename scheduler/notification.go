@@ -9,7 +9,6 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 
 	"github.com/warmte/tripl/handler"
-	"github.com/warmte/tripl/lang"
 	"github.com/warmte/tripl/service"
 )
 
@@ -34,14 +33,6 @@ func NewNotificationSender(
 		ticketHandler:  ticketHandler,
 		bookingHandler: bookingHandler,
 		eventHandler:   eventHandler,
-	}
-}
-func (s *NotificationSender) getLangCfg(ctx context.Context, userID int64) *lang.Cfg {
-	language, err := s.userService.GetLanguage(ctx, userID)
-	if err == nil && lang.Language(language) == lang.LanguageEn {
-		return lang.Get(lang.LanguageEn)
-	} else {
-		return lang.Get(lang.LanguageRu)
 	}
 }
 
@@ -77,7 +68,7 @@ func (s *NotificationSender) sendUserTomorrow(
 		return fmt.Errorf("load Moscow timezone: %w", err)
 	}
 
-	cfg := s.getLangCfg(ctx, userID)
+	cfg := s.userService.GetLanguage(ctx, userID)
 
 	now := time.Now().In(location)
 	tomorrow := now.AddDate(0, 0, 1)
