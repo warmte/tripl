@@ -112,6 +112,8 @@ type bookingAIResponse struct {
 type eventAIResponse struct {
 	Name      *string `json:"name"`
 	Location  *string `json:"location"`
+	StartDate *string `json:"start_date"`
+	EndDate   *string `json:"end_date"`
 	StartTime *string `json:"start_time"`
 	EndTime   *string `json:"end_time"`
 	Cost      *string `json:"cost"`
@@ -266,22 +268,16 @@ func (s *AIService) parseTickets(response string, userID int64) ([]Ticket, error
 	tickets := make([]Ticket, 0, len(data.Tickets))
 
 	for _, data := range data.Tickets {
-
-		if data.Cost != nil && *(data.Cost) == "0" || *(data.Cost) == "null" {
-			data.Cost = nil
-		}
-		if data.Cost == nil {
-			data.Currency = nil
-		}
+		cost, currency := checkedCostCurrency(data.Cost, data.Currency)
 		tickets = append(tickets, Ticket{
 			UserID:           userID,
 			Vehicle:          rmNull(data.Vehicle),
 			DeparturePoint:   rmNull(data.DeparturePoint),
 			ArrivalPoint:     rmNull(data.ArrivalPoint),
-			DepartureTime:    parseOptionalDateTime(data.DepartureDate, data.DepartureTime, "departure"),
-			ArrivalTime:      parseOptionalDateTime(data.ArrivalDate, data.ArrivalTime, "arrival"),
-			Cost:             data.Cost,
-			Currency:         rmNull(data.Currency),
+			DepartureTime:    parseOptionalDateTime(data.DepartureDate, data.DepartureTime),
+			ArrivalTime:      parseOptionalDateTime(data.ArrivalDate, data.ArrivalTime),
+			Cost:             cost,
+			Currency:         currency,
 			DepartureAddress: rmNull(data.DepartureAddress),
 			ArrivalAddress:   rmNull(data.ArrivalAddress),
 			Seat:             rmNull(data.Seat),
@@ -299,32 +295,15 @@ func (s *AIService) parseBooking(response string, userID int64) (Booking, error)
 		return Booking{}, fmt.Errorf("%w: booking: %v", ErrAIInvalidJSON, err)
 	}
 
-	checkInDate := parseOptionalDate(
-		data.CheckInDate,
-		"check_in_date",
-	)
+	checkInDate := parseOptionalDate(data.CheckInDate)
 
-	checkOutDate := parseOptionalDate(
-		data.CheckOutDate,
-		"check_out_date",
-	)
+	checkOutDate := parseOptionalDate(data.CheckOutDate)
 
-	checkInTime := parseOptionalTime(
-		data.CheckInTime,
-		"check_in_time",
-	)
+	checkInTime := parseOptionalTime(data.CheckInTime)
 
-	checkOutTime := parseOptionalTime(
-		data.CheckOutTime,
-		"check_out_time",
-	)
+	checkOutTime := parseOptionalTime(data.CheckOutTime)
 
-	if data.Cost != nil && *(data.Cost) == "0" || *(data.Cost) == "null" {
-		data.Cost = nil
-	}
-	if data.Cost == nil {
-		data.Currency = nil
-	}
+	cost, currency := checkedCostCurrency(data.Cost, data.Currency)
 
 	return Booking{
 		UserID:       userID,
@@ -332,8 +311,8 @@ func (s *AIService) parseBooking(response string, userID int64) (Booking, error)
 		Place:        rmNull(data.Place),
 		CheckInDate:  checkInDate,
 		CheckOutDate: checkOutDate,
-		Cost:         data.Cost,
-		Currency:     rmNull(data.Currency),
+		Cost:         cost,
+		Currency:     currency,
 		Address:      rmNull(data.Address),
 		CheckInTime:  checkInTime,
 		CheckOutTime: checkOutTime,
@@ -348,22 +327,17 @@ func (s *AIService) parseEvent(response string, userID int64) (Event, error) {
 		return Event{}, fmt.Errorf("%w: event: %v", ErrAIInvalidJSON, err)
 	}
 
-	startTime := parseOptionalTime(
+	startTime := parseOptionalDateTime(
+		data.StartDate,
 		data.StartTime,
-		"start_time",
 	)
 
-	endTime := parseOptionalTime(
+	endTime := parseOptionalDateTime(
+		data.EndDate,
 		data.EndTime,
-		"end_time",
 	)
 
-	if data.Cost != nil && *(data.Cost) == "0" || *(data.Cost) == "null" {
-		data.Cost = nil
-	}
-	if data.Cost == nil {
-		data.Currency = nil
-	}
+	cost, currency := checkedCostCurrency(data.Cost, data.Currency)
 
 	return Event{
 		UserID:    userID,
@@ -371,17 +345,17 @@ func (s *AIService) parseEvent(response string, userID int64) (Event, error) {
 		Location:  rmNull(data.Location),
 		StartTime: startTime,
 		EndTime:   endTime,
-		Cost:      data.Cost,
-		Currency:  rmNull(data.Currency),
+		Cost:      cost,
+		Currency:  currency,
 	}, nil
 }
 
-func parseOptionalDate(value *string, field string) *time.Time {
+func parseOptionalDate(value *string) *time.Time {
 	if value == nil || strings.TrimSpace(*value) == "" {
 		return nil
 	}
 
-	result, err := time.Parse("2006-01-02", *value)
+	result, err := time.Parse("02.01.2006", *value)
 	if err != nil {
 		return nil
 	}
@@ -389,22 +363,19 @@ func parseOptionalDate(value *string, field string) *time.Time {
 	return &result
 }
 
-func parseOptionalTime(value *string, field string) *time.Time {
+func parseOptionalTime(value *string) *time.Time {
 	if value == nil || strings.TrimSpace(*value) == "" {
 		return nil
 	}
 
-	result, err := time.Parse(
-		time.RFC3339,
-		strings.TrimSpace(*value),
-	)
+	result, err := time.Parse("15:04", strings.TrimSpace(*value))
 	if err != nil {
 		return nil
 	}
 	return &result
 }
 
-func parseOptionalDateTime(date *string, value *string, field string) *time.Time {
+func parseOptionalDateTime(date *string, value *string) *time.Time {
 	if date == nil || value == nil ||
 		strings.TrimSpace(*date) == "" ||
 		strings.TrimSpace(*value) == "" {
@@ -444,11 +415,18 @@ func cleanJSONResponse(value string) string {
 }
 
 func rmNull(value *string) *string {
-	if value != nil && *value == "null" {
+	if value != nil && (*value == "null" || *value == "") {
 		return nil
 	} else {
 		return value
 	}
+}
+
+func checkedCostCurrency(cost *string, currency *string) (*string, *string) {
+	if (cost != nil && (*(cost) == "0" || *(cost) == "null" || *(cost) == "")) || cost == nil {
+		return nil, nil
+	}
+	return cost, rmNull(currency)
 }
 
 const englishPrompt = "Use English for all textual values: airplane, train, bus, carriage, seat, etc."
@@ -529,8 +507,10 @@ Fields:
 {
   "name": "string or null",
   "location": "string or null",
-  "start_time": "DD.MM.YYYY HH:MM or null",
-  "end_time": "DD.MM.YYYY HH:MM or null",
+	"start_date": "DD.MM.YYYY or null",
+  "end_date": "DD.MM.YYYY or null",
+  "start_time": "HH:MM or null",
+  "end_time": "HH:MM or null",
   "cost": "string or null",
   "currency": "string or null"
 }
@@ -538,7 +518,7 @@ Fields:
 Rules:
 - name = event name or title.
 - location = event venue and address, if shown.
-- start_time/end_time = DD.MM.YYYY HH:MM.
+- Dates: DD.MM.YYYY. Times: HH:MM. If one-day event, return start_date = end_date.
 - cost = numeric amount only, without currency symbols or codes.
 - currency = stated currency code or name.
 - Extract each field independently. Missing information in one field must not make other fields null.
