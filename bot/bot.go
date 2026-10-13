@@ -166,9 +166,14 @@ func (bot Bot) matchAddMainFieldsObject(msg *tgbotapi.Message, tripObject *TripO
 			bot.replyWithKeyboard(msg.Chat.ID, fmt.Sprintf(cfg.Errors.ObjectsLimit, objectName, MaxObjects, objectName), [][]string{{cfg.Buttons.Cancel}}, cfg)
 			return true
 		}
+		remainingUploads, err := bot.userService.GetRemaining(bot.ctx, msg.Chat.ID)
+		fileText := ""
+		if err == nil {
+			fileText = fmt.Sprintf(cfg.AddAsFile, remainingUploads)
+		}
 		bot.replyWithKeyboard(
 			msg.Chat.ID,
-			fmt.Sprintf("%s\n\n- %s\n\n%s\n\n%s", tripObject.Cfg.AddMainFields, strings.Join(tripObject.Cfg.MainFields, "\n- "), tripObject.Cfg.AddExample.Main, cfg.AddAsFile),
+			fmt.Sprintf("%s\n\n- %s\n\n%s\n\n%s", tripObject.Cfg.AddMainFields, strings.Join(tripObject.Cfg.MainFields, "\n- "), tripObject.Cfg.AddExample.Main, fileText),
 			[][]string{{cfg.Buttons.Cancel}}, cfg)
 		bot.userService.SetState(msg.Chat.ID, service.AddInfo.For(string(tripObject.Label)))
 		return true
@@ -180,6 +185,10 @@ func (bot Bot) matchAddOtherFieldsObject(msg *tgbotapi.Message, tripObject *Trip
 	possibleCurrentStage := service.AddInfo.For(string(tripObject.Label)).Stage
 	if bot.matchByStage(msg, possibleCurrentStage) {
 		if msg.Document != nil {
+			if err := bot.userService.TryConsume(bot.ctx, msg.Chat.ID); err != nil {
+				bot.replyForError(msg.Chat.ID, err, cfg)
+				return true
+			}
 			bot.documentHandler.Handle(bot.ctx, msg, tripObject.Label)
 			bot.userService.SetState(msg.Chat.ID, service.Default)
 			bot.replyWithKeyboard(msg.Chat.ID, cfg.DocumentInProcess, BMain(cfg), cfg)
@@ -272,7 +281,7 @@ func (bot *Bot) Run() {
 				log.Printf("callback answer: %v", err)
 			}
 
-			langCfg := bot.userService.GetLanguage(bot.ctx, callback.From.ID)
+			langCfg := bot.userService.GetLanguageCfg(bot.ctx, callback.From.ID)
 			edits, err := bot.callbackHandler.Handle(
 				bot.ctx,
 				callback,
@@ -294,7 +303,7 @@ func (bot *Bot) Run() {
 			{
 				msg := update.Message
 				log.Printf("[%s] %s", msg.From.UserName, msg.Text)
-				langCfg := bot.userService.GetLanguage(bot.ctx, msg.Chat.ID)
+				langCfg := bot.userService.GetLanguageCfg(bot.ctx, msg.Chat.ID)
 				if msg.ReplyToMessage != nil {
 					{
 						message, err := bot.handlers.HandleEditReply(
@@ -344,10 +353,12 @@ func (bot *Bot) Run() {
 							{langCfg.Buttons.Lang.Ru, langCfg.Buttons.Lang.En}}, langCfg)
 				} else if bot.matchByText(msg, "ru", []string{langCfg.Buttons.Lang.Ru}) {
 					bot.userService.SetOrUpdateLang(bot.ctx, msg.Chat.ID, lang.LanguageRu)
-					bot.replyWithKeyboard(msg.Chat.ID, langCfg.Menu, BMain(langCfg), langCfg)
+					newLangCfg := bot.userService.GetLanguageCfg(bot.ctx, msg.Chat.ID)
+					bot.replyWithKeyboard(msg.Chat.ID, newLangCfg.Menu, BMain(newLangCfg), newLangCfg)
 				} else if bot.matchByText(msg, "en", []string{langCfg.Buttons.Lang.En}) {
 					bot.userService.SetOrUpdateLang(bot.ctx, msg.Chat.ID, lang.LanguageEn)
-					bot.replyWithKeyboard(msg.Chat.ID, langCfg.Menu, BMain(langCfg), langCfg)
+					newLangCfg := bot.userService.GetLanguageCfg(bot.ctx, msg.Chat.ID)
+					bot.replyWithKeyboard(msg.Chat.ID, newLangCfg.Menu, BMain(newLangCfg), newLangCfg)
 				} else if bot.matchShowSingle(msg, langCfg) {
 				} else {
 					msg := tgbotapi.NewMessage(update.Message.Chat.ID, "unknown command")

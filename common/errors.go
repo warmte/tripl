@@ -18,7 +18,8 @@ var (
 	ErrInternalError           = errors.New("internal error")
 	ErrIncorrectFileFormat     = errors.New("uploaded file is not a PDF")
 	ErrTooLargeFile            = errors.New("uploaded file is too large")
-	ErrEmptyFile               = errors.New("File contains no text")
+	ErrEmptyFile               = errors.New("file contains no text")
+	ErrDailyUploadLimitReached = errors.New("daily upload limit reached")
 )
 
 func GetErrorMessage(err error, cfg lang.Cfg) string {
@@ -49,6 +50,9 @@ func GetErrorMessage(err error, cfg lang.Cfg) string {
 
 	case ErrEmptyFile:
 		return cfg.Errors.EmptyFile
+
+	case ErrDailyUploadLimitReached:
+		return cfg.Errors.ErrDailyUploadLimitReached
 
 	default:
 		return cfg.Errors.InternalError

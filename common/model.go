@@ -14,7 +14,11 @@ const (
 	TimeLayout     = "15:04"
 )
 
-const PageSize = 3
+const (
+	LocationName = "Europe/Moscow"
+)
+
+const PageSize int = 5
 
 type Page[T any] struct {
 	Items   []T
@@ -384,15 +388,15 @@ func (f Trip) Show(cfg *lang.TripObjectCfg) string {
 }
 
 func (f Ticket) Preview(cfg *lang.TripObjectCfg) string {
-	return fmt.Sprintf("/tt%d %s-%s\n%s, %s - %s", f.ID, f.DeparturePoint, f.ArrivalPoint, f.Vehicle, f.DepartureTime.Format(DatetimeLayout), f.ArrivalTime.Format(DatetimeLayout))
+	return fmt.Sprintf("/tt%d %s-%s\n%s, %s - %s", f.ID, *f.DeparturePoint, *f.ArrivalPoint, *f.Vehicle, f.DepartureTime.Format(DatetimeLayout), f.ArrivalTime.Format(DatetimeLayout))
 }
 
 func (f Booking) Preview(cfg *lang.TripObjectCfg) string {
-	return fmt.Sprintf("/bk%d %s\n%s, %s - %s", f.ID, f.Place, f.City, f.CheckInDate.Format(DateLayout), f.CheckOutDate.Format(DateLayout))
+	return fmt.Sprintf("/bk%d %s\n%s, %s - %s", f.ID, *f.Place, *f.City, f.CheckInDate.Format(DateLayout), f.CheckOutDate.Format(DateLayout))
 }
 
 func (f Event) Preview(cfg *lang.TripObjectCfg) string {
-	res := fmt.Sprintf("/ev%d %s\n%s, %s", f.ID, f.Name, f.Location, f.StartTime.Format(DatetimeLayout))
+	res := fmt.Sprintf("/ev%d %s\n%s, %s", f.ID, *f.Name, *f.Location, f.StartTime.Format(DatetimeLayout))
 
 	if f.EndTime != nil {
 		return fmt.Sprintf("%s - %s", res, f.EndTime.Format(DatetimeLayout))

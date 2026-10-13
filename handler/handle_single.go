@@ -43,7 +43,6 @@ func (h CommonHandler[T]) ShowSingle(
 			text += fmt.Sprintf("🔗 %s", tripInfo)
 		}
 	} else {
-
 	}
 
 	msg := tgbotapi.NewMessage(userID, lang.EscapeMarkdownV2(text))

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -169,4 +170,66 @@ func (r UserRepository) GetLanguage(ctx context.Context, userID int64) (string, 
 	}
 
 	return language, nil
+}
+
+func (r UserRepository) TryConsume(
+	ctx context.Context,
+	userID int64,
+	limit int,
+	date time.Time,
+) (bool, error) {
+	if userID <= 0 {
+		return false, errors.New("invalid user ID")
+	}
+
+	date = date.UTC()
+	day := date.Format(DateLayout)
+
+	tag, err := r.db.Exec(ctx, `
+		INSERT INTO user_daily_usage (user_id, usage_date, upload_count)
+		VALUES ($1, $2, 1)
+		ON CONFLICT (user_id, usage_date)
+		DO UPDATE SET upload_count = user_daily_usage.upload_count + 1
+		WHERE user_daily_usage.upload_count < $3
+	`, userID, day, limit)
+	if err != nil {
+		return false, fmt.Errorf("reserve daily upload: %w", err)
+	}
+
+	return tag.RowsAffected() == 1, nil
+}
+
+func (r UserRepository) GetCount(
+	ctx context.Context,
+	userID int64,
+	date time.Time,
+) (int, error) {
+	var count int
+
+	err := r.db.QueryRow(ctx, `
+		SELECT upload_count
+		FROM user_daily_usage
+		WHERE user_id = $1 AND usage_date = $2
+	`, userID, date.UTC().Format(DateLayout)).Scan(&count)
+
+	if errors.Is(err, pgx.ErrNoRows) {
+		return 0, nil
+	}
+	if err != nil {
+		return 0, fmt.Errorf("get daily upload count: %w", err)
+	}
+
+	return count, nil
+}
+
+func (r UserRepository) DeleteOlderThan(ctx context.Context, date time.Time) error {
+	_, err := r.db.Exec(ctx, `
+		DELETE FROM user_daily_usage
+		WHERE usage_date < $1::date - 7
+	`, date.Format(DateLayout))
+	if err != nil {
+		return fmt.Errorf("delete old daily usage: %w", err)
+	}
+
+	return nil
 }

@@ -19,7 +19,7 @@ const workersCount = 2
 type DocumentResult struct {
 	ChatID int64
 	Label  Label
-	Result TripObjectView
+	Result []TripObjectView
 	Err    error
 }
 
@@ -161,17 +161,34 @@ func (h *DocumentHandler) process(task documentTask) {
 		return
 	}
 
-	var extracted TripObjectView
+	lang := h.userService.GetLanguage(task.ctx, task.chatID)
+
+	err = nil
+	extracted := []TripObjectView{}
 	switch task.label {
 	case TicketLabel:
-		ticket, err1 := h.aiService.ExtractTicket(task.ctx, task.chatID, text)
-		extracted, err = *ticket, err1
+		tickets, err1 := h.aiService.ExtractTicket(task.ctx, task.chatID, text, lang)
+		if err1 == nil {
+			for _, ticket := range tickets {
+				extracted = append(extracted, ticket)
+			}
+		} else {
+			err = err1
+		}
 	case BookingLabel:
-		booking, err1 := h.aiService.ExtractBooking(task.ctx, task.chatID, text)
-		extracted, err = *booking, err1
+		booking, err1 := h.aiService.ExtractBooking(task.ctx, task.chatID, text, lang)
+		if err1 == nil {
+			extracted = []TripObjectView{booking}
+		} else {
+			err = err1
+		}
 	case EventLabel:
-		event, err1 := h.aiService.ExtractEvent(task.ctx, task.chatID, text)
-		extracted, err = *event, err1
+		event, err1 := h.aiService.ExtractEvent(task.ctx, task.chatID, text, lang)
+		if err1 == nil {
+			extracted = []TripObjectView{event}
+		} else {
+			err = err1
+		}
 	default:
 		extracted, err = nil, fmt.Errorf("unknown label")
 	}
@@ -186,7 +203,7 @@ func (h *DocumentHandler) process(task documentTask) {
 	h.results <- result
 }
 
-func (h *DocumentHandler) Run(ctx context.Context) {
+func (h *DocumentHandler) RunHandleResult(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
@@ -202,7 +219,7 @@ func (h *DocumentHandler) Run(ctx context.Context) {
 }
 
 func (h *DocumentHandler) handleResult(ctx context.Context, result DocumentResult) {
-	cfg := h.userService.GetLanguage(ctx, result.ChatID)
+	cfg := h.userService.GetLanguageCfg(ctx, result.ChatID)
 	if result.Err != nil {
 		h.api.Send(tgbotapi.NewMessage(result.ChatID, fmt.Sprintf(cfg.Errors.DocumentFailed)))
 		return
@@ -210,43 +227,51 @@ func (h *DocumentHandler) handleResult(ctx context.Context, result DocumentResul
 
 	switch result.Label {
 	case TicketLabel:
-		added, err := h.ticketHandler.Add(ctx, result.Result)
-		if err != nil {
-			h.api.Send(tgbotapi.NewMessage(result.ChatID, fmt.Sprintf(cfg.Errors.DocumentFailed)))
-			return
+		for _, t := range result.Result {
+			added, err := h.ticketHandler.Add(ctx, t)
+			if err != nil {
+				h.api.Send(tgbotapi.NewMessage(result.ChatID, fmt.Sprintf(cfg.Errors.DocumentFailed)))
+				return
+			}
+			showAdded, err := h.ticketHandler.ShowSingle(ctx, result.ChatID, added.GetID(), cfg)
+			if err != nil {
+				h.api.Send(tgbotapi.NewMessage(result.ChatID, fmt.Sprintf(cfg.Errors.DocumentFailed)))
+				return
+			}
+			h.api.Send(tgbotapi.NewMessage(result.ChatID, cfg.DocumentFinished))
+			h.api.Send(*showAdded)
 		}
-		showAdded, err := h.ticketHandler.ShowSingle(ctx, result.ChatID, added.GetID(), cfg)
-		if err != nil {
-			h.api.Send(tgbotapi.NewMessage(result.ChatID, fmt.Sprintf(cfg.Errors.DocumentFailed)))
-			return
-		}
-		h.api.Send(*showAdded)
 
 	case BookingLabel:
-		added, err := h.bookingHandler.Add(ctx, result.Result)
-		if err != nil {
-			h.api.Send(tgbotapi.NewMessage(result.ChatID, fmt.Sprintf(cfg.Errors.DocumentFailed)))
-			return
+		for _, b := range result.Result {
+			added, err := h.bookingHandler.Add(ctx, b)
+			if err != nil {
+				h.api.Send(tgbotapi.NewMessage(result.ChatID, fmt.Sprintf(cfg.Errors.DocumentFailed)))
+				return
+			}
+			showAdded, err := h.bookingHandler.ShowSingle(ctx, result.ChatID, added.GetID(), cfg)
+			if err != nil {
+				h.api.Send(tgbotapi.NewMessage(result.ChatID, fmt.Sprintf(cfg.Errors.DocumentFailed)))
+				return
+			}
+			h.api.Send(tgbotapi.NewMessage(result.ChatID, cfg.DocumentFinished))
+			h.api.Send(*showAdded)
 		}
-		showAdded, err := h.bookingHandler.ShowSingle(ctx, result.ChatID, added.GetID(), cfg)
-		if err != nil {
-			h.api.Send(tgbotapi.NewMessage(result.ChatID, fmt.Sprintf(cfg.Errors.DocumentFailed)))
-			return
-		}
-		h.api.Send(*showAdded)
 
 	case EventLabel:
-		added, err := h.eventHandler.Add(ctx, result.Result)
-		if err != nil {
-			h.api.Send(tgbotapi.NewMessage(result.ChatID, fmt.Sprintf(cfg.Errors.DocumentFailed)))
-			return
+		for _, e := range result.Result {
+			added, err := h.eventHandler.Add(ctx, e)
+			if err != nil {
+				h.api.Send(tgbotapi.NewMessage(result.ChatID, fmt.Sprintf(cfg.Errors.DocumentFailed)))
+				return
+			}
+			showAdded, err := h.eventHandler.ShowSingle(ctx, result.ChatID, added.GetID(), cfg)
+			if err != nil {
+				h.api.Send(tgbotapi.NewMessage(result.ChatID, fmt.Sprintf(cfg.Errors.DocumentFailed)))
+				return
+			}
+			h.api.Send(tgbotapi.NewMessage(result.ChatID, cfg.DocumentFinished))
+			h.api.Send(*showAdded)
 		}
-		showAdded, err := h.eventHandler.ShowSingle(ctx, result.ChatID, added.GetID(), cfg)
-		if err != nil {
-			h.api.Send(tgbotapi.NewMessage(result.ChatID, fmt.Sprintf(cfg.Errors.DocumentFailed)))
-			return
-		}
-		h.api.Send(*showAdded)
-		h.api.Send(tgbotapi.NewMessage(result.ChatID, cfg.DocumentFinished))
 	}
 }

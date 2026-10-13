@@ -63,36 +63,34 @@ func (s *NotificationSender) sendUserTomorrow(
 	userID int64,
 	location *time.Location,
 ) error {
-	location, err := time.LoadLocation("Europe/Moscow")
-	if err != nil {
-		return fmt.Errorf("load Moscow timezone: %w", err)
+	cfg := s.userService.GetLanguageCfg(ctx, userID)
+
+	tomorrowTickets, errTickets := s.ticketHandler.ShowTomorrowList(ctx, userID, cfg)
+	tomorrowBookings, errBookings := s.bookingHandler.ShowTomorrowList(ctx, userID, cfg)
+	tomorrowEvents, errEvents := s.eventHandler.ShowTomorrowList(ctx, userID, cfg)
+
+	if errTickets == nil || errBookings == nil || errEvents == nil {
+		now := time.Now().In(location)
+		tomorrow := now.AddDate(0, 0, 1)
+		header := fmt.Sprintf("📅 %s — %s", cfg.TomorrowPlans, tomorrow.Format("02.01.2006"))
+
+		message := tgbotapi.NewMessage(userID, header)
+		s.api.Send(message)
 	}
 
-	cfg := s.userService.GetLanguage(ctx, userID)
-
-	now := time.Now().In(location)
-	tomorrow := now.AddDate(0, 0, 1)
-	header := fmt.Sprintf("📅 %s — %s", cfg.TomorrowPlans, tomorrow.Format("02.01.2006"))
-
-	message := tgbotapi.NewMessage(userID, header)
-	s.api.Send(message)
-
-	tomorrowTickets, err := s.ticketHandler.ShowTomorrowList(ctx, userID, location, cfg)
-	if err == nil {
+	if errTickets == nil {
 		if _, err := s.api.Send(tomorrowTickets); err != nil {
 			log.Printf("send tomorrow tickets: %v", err)
 		}
 	}
 
-	tomorrowBookings, err := s.bookingHandler.ShowTomorrowList(ctx, userID, location, cfg)
-	if err == nil {
+	if errBookings == nil {
 		if _, err := s.api.Send(tomorrowBookings); err != nil {
 			log.Printf("send tomorrow bookings: %v", err)
 		}
 	}
 
-	tomorrowEvents, err := s.eventHandler.ShowTomorrowList(ctx, userID, location, cfg)
-	if err == nil {
+	if errEvents == nil {
 		if _, err := s.api.Send(tomorrowEvents); err != nil {
 			log.Printf("send tomorrow events: %v", err)
 		}

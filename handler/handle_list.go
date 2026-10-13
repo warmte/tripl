@@ -238,10 +238,13 @@ func getStartEndTime(location *time.Location) (time.Time, time.Time, error) {
 func (h CommonHandler[T]) buildTomorrowList(
 	ctx context.Context,
 	userID int64,
-	location *time.Location,
 	page int,
 	cfg *lang.Cfg,
 ) (string, *tgbotapi.InlineKeyboardMarkup, error) {
+	location, err := time.LoadLocation(LocationName)
+	if err != nil {
+		return "", nil, fmt.Errorf("load scheduler location: %w", err)
+	}
 	start, end, err := getStartEndTime(location)
 	if err != nil {
 		return "", nil, err
@@ -254,26 +257,38 @@ func (h CommonHandler[T]) buildTomorrowList(
 	if len(result.Items) == 0 {
 		return "", nil, ErrEmptyList
 	}
+	item := result.Items[0]
 
-	objectCfg := TripObjectCfgByLabel(cfg, h.label)
-	text := fmt.Sprintf("%s:\n\n%s", objectCfg.Many, h.RenderObjects(result.Items, objectCfg))
-	keyboard := makeListKeyboard(h.label, TomorrowList, int64(page), result.HasNext)
-	return text, keyboard, nil
+	singleMsg, err := h.ShowSingle(ctx, userID, item.GetID(), cfg)
+	if err != nil {
+		return "", nil, err
+	}
+	singleKeyboard := makeSingleKeyboard(h.label, item.GetID(), item.GetTripID(), cfg)
+	listKeyboard := makeListKeyboard(h.label, TomorrowList, int64(page), result.HasNext)
+	var rows [][]tgbotapi.InlineKeyboardButton
+	if singleKeyboard != nil {
+		rows = append(rows, singleKeyboard.InlineKeyboard...)
+	}
+	if listKeyboard != nil {
+		rows = append(rows, listKeyboard.InlineKeyboard...)
+	}
+	keyboard := &tgbotapi.InlineKeyboardMarkup{InlineKeyboard: rows}
+	return singleMsg.Text, keyboard, nil
 }
 
 func (h CommonHandler[T]) ShowTomorrowList(
 	ctx context.Context,
 	userID int64,
-	location *time.Location,
 	cfg *lang.Cfg,
 ) (*tgbotapi.MessageConfig, error) {
-	text, keyboard, err := h.buildTomorrowList(ctx, userID, location, 0, cfg)
+	text, keyboard, err := h.buildTomorrowList(ctx, userID, 0, cfg)
 	if err != nil {
 		return nil, err
 	}
 
 	message := tgbotapi.NewMessage(userID, text)
 	message.ReplyMarkup = keyboard
+	message.ParseMode = tgbotapi.ModeMarkdownV2
 
 	return &message, nil
 }
@@ -281,7 +296,6 @@ func (h CommonHandler[T]) ShowTomorrowList(
 func (h CommonHandler[T]) HandleTomorrowList(
 	ctx context.Context,
 	callback *tgbotapi.CallbackQuery,
-	location *time.Location,
 	page int,
 	cfg *lang.Cfg,
 ) (*tgbotapi.EditMessageTextConfig, error) {
@@ -289,7 +303,7 @@ func (h CommonHandler[T]) HandleTomorrowList(
 		return nil, fmt.Errorf("callback message is nil")
 	}
 
-	text, keyboard, err := h.buildTomorrowList(ctx, callback.From.ID, location, 0, cfg)
+	text, keyboard, err := h.buildTomorrowList(ctx, callback.From.ID, page, cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -300,6 +314,7 @@ func (h CommonHandler[T]) HandleTomorrowList(
 		text,
 		*keyboard,
 	)
+	replyMsg.ParseMode = tgbotapi.ModeMarkdownV2
 
 	if len(keyboard.InlineKeyboard) == 0 {
 		replyMsg = tgbotapi.NewEditMessageText(

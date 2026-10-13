@@ -47,6 +47,9 @@ func (h CommonHandler[T]) SelectAction(
 	case DetachSingle:
 		r, err := h.HandleDetachSingle(ctx, callback, parsedCallback.V1, cfg)
 		return []tgbotapi.Chattable{r}, err
+	case TomorrowList:
+		r, err := h.HandleTomorrowList(ctx, callback, int(parsedCallback.V1), cfg)
+		return []tgbotapi.Chattable{r}, err
 	default:
 		return nil, unsupportedCallbackError
 	}
@@ -84,4 +87,3 @@ func (h CommonHandler[T]) SelectExtendedAction(
 func button(text string, callback string) tgbotapi.InlineKeyboardButton {
 	return tgbotapi.NewInlineKeyboardButtonData(text, callback)
 }
-

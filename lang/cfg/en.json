@@ -1,0 +1,160 @@
+{
+  "welcome": "Hi! I'm a simple trip planner.",
+  "choose_lang": "Выберите язык:\nChoose your language:",
+  "menu": "Choose an action.",
+  "add": "What would you like to add?",
+  "added": "Added.",
+  "add_as_file": "You can also upload a PDF file, and the bot will extract the information automatically. You have %d attempts remaining today.",
+  "info": "Choose a number to view the full details. Use the arrows to navigate.",
+  "what_edit": "Which field would you like to change?",
+  "on_edit": "You are editing the field:",
+  "on_edit_reply": "Reply to this message with the new value.",
+  "edited": "Successfully updated.",
+  "on_delete": "Are you sure you want to permanently delete it?",
+  "deleted": "Successfully deleted.",
+  "spent_for": "Spent on %s",
+  "spent_total": "Total spent",
+  "tomorrow_plans": "Plans for tomorrow",
+  "document_in_process": "The document is being processed. This may take a few minutes.",
+  "document_finished": "The document has been processed. Please check the result carefully, as the bot may make mistakes.",
+  "buttons": {
+    "add": "+",
+    "back": "Back",
+    "cancel": "🔙 Cancel",
+    "settings": "⚙ Settings",
+    "skip": "Skip",
+    "delete": "🗑 Delete",
+    "edit": "✏️ Edit",
+    "attach": "🔗 Attach",
+    "detach": "🔓 Detach",
+    "stats": "📄 Statistics",
+    "lang": {
+      "ru": "Русский",
+      "en": "English",
+      "lang": "Language / Язык"
+    }
+  },
+  "trip_object": {
+    "ticket": {
+      "one": "Ticket",
+      "many": "Tickets",
+      "archive": "Ticket archive",
+      "actual": "Current tickets",
+      "empty": "No tickets",
+      "add_main_fields": "Enter the following fields, one per line. Enter the date and time in this format: `dd.mm.yyyy hh:mm`.",
+      "add_other_fields": "Enter the additional fields. If a field is not needed, enter a dash: `-`.",
+      "add_other_fields_tips": "- Enter the price as a single number so the ticket is included in trip statistics.\n- Specify the currency using its symbol or code. Examples: `₽`, `¥`, `$`, `€`, `£`.\n- Comments can be up to 256 characters long.",
+      "main_fields": [
+        "Transport",
+        "Departure point",
+        "Arrival point",
+        "Departure date and time",
+        "Arrival date and time"
+      ],
+      "other_fields": [
+        "Price",
+        "Currency",
+        "Departure address",
+        "Arrival address",
+        "Carriage / seat",
+        "Ticket number",
+        "Comment"
+      ],
+      "add_example": {
+        "main": "```Example\nTrain\nSaint Petersburg\nSamara\n30.06.2026 15:00\n01.07.2026 12:00```",
+        "other": "\n```Example\n6000\n₽\nMoskovsky railway station\n-\nCarriage 6, seat 15\n-\nDinner included```"
+      }
+    },
+    "booking": {
+      "one": "Booking",
+      "many": "Bookings",
+      "archive": "Booking archive",
+      "actual": "Current bookings",
+      "empty": "No bookings",
+      "add_main_fields": "Enter the following fields, one per line. Enter the dates in this format: `dd.mm.yyyy`.",
+      "add_other_fields": "Enter the additional fields. If a field is not needed, enter a dash: `-`.",
+      "add_other_fields_tips": "- Enter the time in this format: `hh:mm`.\n- Enter the price as a single number so the booking is included in trip statistics.\n- Specify the currency using its symbol or code. Examples: `₽`, `¥`, `$`, `€`, `£`.\n- Comments can be up to 256 characters long.",
+      "main_fields": [
+        "City",
+        "Hotel or location name",
+        "Check-in date",
+        "Check-out date"
+      ],
+      "other_fields": [
+        "Price",
+        "Currency",
+        "Address",
+        "Check-in time",
+        "Check-out time",
+        "Booking number",
+        "Comment"
+      ],
+      "add_example": {
+        "main": "```Example\nSeoul\nBest Western Incheon\n08.04.2026\n14.04.2026```",
+        "other": "```Example\n500000\nKRW\n48-27 Gonghang-ro 424beon-gil, Unseo-dong, Jung-gu, Incheon, South Korea\n15:00\n12:00\nBW12345\n-```"
+      }
+    },
+    "event": {
+      "one": "Event",
+      "many": "Events",
+      "archive": "Event archive",
+      "actual": "Upcoming events",
+      "empty": "No events",
+      "add_main_fields": "Enter the following fields, one per line. Enter the date and time in this format: `dd.mm.yyyy hh:mm`.",
+      "add_other_fields": "Enter the additional fields. If a field is not needed, enter a dash: `-`.",
+      "add_other_fields_tips": "- Enter the date and time in this format: `dd.mm.yyyy hh:mm`.\n- Enter the price as a single number so the event is included in trip statistics.\n- Specify the currency using its symbol or code. Examples: `₽`, `¥`, `$`, `€`, `£`.\n- Comments can be up to 256 characters long.",
+      "main_fields": [
+        "Event name",
+        "Location",
+        "Start date and time"
+      ],
+      "other_fields": [
+        "End date and time",
+        "Price",
+        "Currency",
+        "Comment"
+      ],
+      "add_example": {
+        "main": "```Example\nWCS Nights\nAzimut\n23.07.2026 15:00\n```",
+        "other": "```Example\n27.07.2026 06:00\n20000\nRUB\nIntermediate JnJ, Intermediate Blind Strictly```"
+      }
+    },
+    "trip": {
+      "one": "Trip",
+      "many": "Trips",
+      "archive": "Trip archive",
+      "actual": "Current trips",
+      "empty": "No trips",
+      "add_main_fields": "Enter the following fields, one per line. Enter the dates in this format: `dd.mm.yyyy`.",
+      "add_other_fields": "Enter the additional fields. If a field is not needed, enter a dash: `-`. Comments can be up to 256 characters long.",
+      "main_fields": [
+        "Trip name",
+        "Start date",
+        "End date"
+      ],
+      "other_fields": [
+        "Comment"
+      ],
+      "add_example": {
+        "main": "```Example\nJapan 2026\n15.04.2026\n22.04.2026```",
+        "other": "```Example\nTraveling with Lera and Alya```"
+      }
+    }
+  },
+  "errors": {
+    "too_long_field": "A field must not exceed 256 characters.",
+    "incorrect date": "The date is invalid or the format is incorrect. Use `dd.mm.yyyy`, for example: `12.01.2020`.",
+    "incorrect time": "The time is invalid or the format is incorrect. Use `hh:mm`, for example: `12:05`.",
+    "incorrect_datetime": "The date and time are invalid or the format is incorrect. Use `dd.mm.yyyy hh:mm`, for example: `12.01.2020 12:05`.",
+    "incorrect_number_of_fields": "You entered an incorrect number of fields. Refer to the example.",
+    "incorrect_input": "The entered data is invalid.",
+    "datetime_restraint": "Error: the start time is later than the end time. Check the end time and correct it if necessary.",
+    "objects_limit": "Unfortunately, you can no longer add %s: the maximum allowed is %d. Delete outdated %s before creating new ones.",
+    "internal_error": "An internal error occurred.",
+    "incorrect_file_format": "Invalid file format. Please upload a file with the .pdf extension.",
+    "too_large_file": "The file is too large. Files must be no larger than 10 MB and contain no more than 10 pages. If necessary, trim the file to keep only the pages containing the required information.",
+    "empty_file": "The uploaded file is empty.",
+    "document_failed": "Failed to process the document.",
+    "daily_upload_limit_reached": "You have reached the daily upload limit. The limit resets at 00:00 Moscow time (UTC+03:00)."
+  }
+}

@@ -34,11 +34,11 @@ func NewCommonService[T TripObjectView](repo repo.Repository[T]) *CommonService[
 	return &CommonService[T]{repo: repo}
 }
 
-func PreparePage[T TripObjectView](items []T) Page[T] {
-	hasNext := len(items) > PageSize
+func PreparePage[T TripObjectView](items []T, pageSize int) Page[T] {
+	hasNext := len(items) > pageSize
 
 	if hasNext {
-		items = items[:PageSize]
+		items = items[:pageSize]
 	}
 
 	return Page[T]{
@@ -58,7 +58,7 @@ func (s CommonService[T]) GetActualPage(
 			fmt.Errorf("get actual page: %w", err)
 	}
 
-	return PreparePage(objects), nil
+	return PreparePage(objects, PageSize), nil
 }
 
 func (s CommonService[T]) GetArchivePage(
@@ -72,7 +72,7 @@ func (s CommonService[T]) GetArchivePage(
 			fmt.Errorf("get archive page: %w", err)
 	}
 
-	return PreparePage(objects), nil
+	return PreparePage(objects, PageSize), nil
 }
 
 func (s CommonService[T]) Create(ctx context.Context, data TripObjectView) (*T, error) {
@@ -112,7 +112,7 @@ func (s CommonService[T]) GetPageByTripID(
 			fmt.Errorf("get page by trip id: %w", err)
 	}
 
-	return PreparePage(tickets), nil
+	return PreparePage(tickets, PageSize), nil
 }
 
 func (s CommonService[T]) GetByID(
@@ -211,7 +211,7 @@ func (s CommonService[T]) GetPageForTime(
 			fmt.Errorf("get actual page: %w", err)
 	}
 
-	return PreparePage(objects), nil
+	return PreparePage(objects, 1), nil
 }
 
 func (s CommonService[T]) CountByUserID(ctx context.Context, userID int64) (int64, error) {

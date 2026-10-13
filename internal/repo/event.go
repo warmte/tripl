@@ -510,8 +510,6 @@ func (r EventRepository) GetForTime(
 		return nil, fmt.Errorf("invalid page: %d", page)
 	}
 
-	offset := page * PageSize
-
 	rows, err := r.db.Query(ctx, `
 		SELECT
 			id,
@@ -529,13 +527,13 @@ func (r EventRepository) GetForTime(
 		  AND start_time < $3
 		ORDER BY start_time ASC, id ASC
 		LIMIT $4 OFFSET $5
-	`, userID, start, end, PageSize+1, offset)
+	`, userID, start, end, 2, page)
 	if err != nil {
 		return nil, fmt.Errorf("get events for time: %w", err)
 	}
 	defer rows.Close()
 
-	result := make([]Event, 0, PageSize+1)
+	result := make([]Event, 0, 2)
 
 	for rows.Next() {
 		var event Event

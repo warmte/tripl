@@ -53,19 +53,20 @@ type LangCfg struct {
 }
 
 type ErrorsCfg struct {
-	TooLongField            string `json:"too_long_field"`
-	IncorrectDate           string `json:"incorrect_date"`
-	IncorrectTime           string `json:"incorrect_time"`
-	IncorrectDatetime       string `json:"incorrect_datetime"`
-	IncorrectNumberOfFields string `json:"incorrect_number_of_fields"`
-	IncorrectInput          string `json:"incorrect_input"`
-	DatetimeRestraint       string `json:"datetime_restraint"`
-	ObjectsLimit            string `json:"objects_limit"`
-	InternalError           string `json:"internal_error"`
-	IncorrectFileFormat     string `json:"incorrect_file_format"`
-	TooLargeFile            string `json:"too_large_file"`
-	EmptyFile               string `json:"empty_file"`
-	DocumentFailed          string `json:"document_failed"`
+	TooLongField               string `json:"too_long_field"`
+	IncorrectDate              string `json:"incorrect_date"`
+	IncorrectTime              string `json:"incorrect_time"`
+	IncorrectDatetime          string `json:"incorrect_datetime"`
+	IncorrectNumberOfFields    string `json:"incorrect_number_of_fields"`
+	IncorrectInput             string `json:"incorrect_input"`
+	DatetimeRestraint          string `json:"datetime_restraint"`
+	ObjectsLimit               string `json:"objects_limit"`
+	InternalError              string `json:"internal_error"`
+	IncorrectFileFormat        string `json:"incorrect_file_format"`
+	TooLargeFile               string `json:"too_large_file"`
+	EmptyFile                  string `json:"empty_file"`
+	DocumentFailed             string `json:"document_failed"`
+	ErrDailyUploadLimitReached string `json:"daily_upload_limit_reached"`
 }
 
 type Cfg struct {
@@ -95,7 +96,7 @@ type Cfg struct {
 //go:embed cfg/ru.json
 var ruRaw []byte
 
-//go:embed cfg/ru.json
+//go:embed cfg/en.json
 var enRaw []byte
 
 var RuCfg = load(ruRaw)

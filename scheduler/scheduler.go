@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"log"
 	"time"
+
+	. "github.com/warmte/tripl/common"
 )
 
 const (
-	locationName = "Europe/Moscow"
-	hour         = 9
-	minute       = 0
+	hour   = 15
+	minute = 41
 )
 
 type Scheduler struct {
@@ -18,8 +19,8 @@ type Scheduler struct {
 	sender   NotificationSender
 }
 
-func New(sender NotificationSender) (*Scheduler, error) {
-	location, err := time.LoadLocation(locationName)
+func NewScheduler(sender NotificationSender) (*Scheduler, error) {
+	location, err := time.LoadLocation(LocationName)
 	if err != nil {
 		return nil, fmt.Errorf("load scheduler location: %w", err)
 	}

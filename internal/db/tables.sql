@@ -1,10 +1,10 @@
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     id BIGSERIAL PRIMARY KEY,
     language VARCHAR(2) NOT NULL DEFAULT 'ru',
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE trips (
+CREATE TABLE IF NOT EXISTS trips (
     id BIGSERIAL PRIMARY KEY,
     user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
 
@@ -19,7 +19,7 @@ CREATE TABLE trips (
         CHECK (start_date <= end_date)
 );
 
-CREATE TABLE tickets (
+CREATE TABLE IF NOT EXISTS tickets (
     id BIGSERIAL PRIMARY KEY,
     user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     trip_id BIGINT REFERENCES trips(id) ON DELETE SET NULL,
@@ -44,7 +44,7 @@ CREATE TABLE tickets (
         CHECK (departure_time <= arrival_time)
 );
 
-CREATE TABLE bookings (
+CREATE TABLE IF NOT EXISTS bookings (
     id BIGSERIAL PRIMARY KEY,
     user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     trip_id BIGINT REFERENCES trips(id) ON DELETE SET NULL,
@@ -68,7 +68,7 @@ CREATE TABLE bookings (
         CHECK (check_in_date <= check_out_date)
 );
 
-CREATE TABLE events (
+CREATE TABLE IF NOT EXISTS events (
     id BIGSERIAL PRIMARY KEY,
     user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     trip_id BIGINT REFERENCES trips(id) ON DELETE SET NULL,
@@ -86,4 +86,11 @@ CREATE TABLE events (
 
     CONSTRAINT events_datetime_check
         CHECK (end_time IS NULL OR start_time <= end_time)
+);
+
+CREATE TABLE IF NOT EXISTS user_daily_usage (
+    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    usage_date DATE NOT NULL,
+    upload_count INTEGER NOT NULL DEFAULT 0 CHECK (upload_count >= 0),
+    PRIMARY KEY (user_id, usage_date)
 );

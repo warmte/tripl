@@ -53,7 +53,7 @@ func main() {
 
 	aiService := ai.NewAIService(
 		"http://localhost:8080/v1/chat/completions",
-		"Qwen3-1.7B-Q8_0.gguf",
+		"Qwen3-4B-Q4_K_M.gguf",
 	)
 	pdfService := document.NewPDFService(api)
 	pdfParser := document.NewPDFParser()
@@ -63,12 +63,13 @@ func main() {
 	b := bot.NewBot(api, ctx, userService, callbackHandler, documentHandler, handlers)
 
 	notificationSender := scheduler.NewNotificationSender(api, userService, ticketsHandler, bookingsHandler, eventsHandler)
-	notificationScheduler, err := scheduler.New(*notificationSender)
+	notificationScheduler, err := scheduler.NewScheduler(*notificationSender)
 	if err != nil {
 		log.Panic("err create scheduler: %w", err)
 	}
 
 	go notificationScheduler.Run(ctx)
-	go documentHandler.Run(ctx)
+	go documentHandler.RunHandleResult(ctx)
+	go userService.RunDailyUsageCleanup(ctx)
 	b.Run()
 }

@@ -610,8 +610,6 @@ func (r BookingRepository) GetForTime(
 		return nil, fmt.Errorf("invalid page: %d", page)
 	}
 
-	offset := page * PageSize
-
 	rows, err := r.db.Query(ctx, `
 		SELECT
 			id,
@@ -632,13 +630,13 @@ func (r BookingRepository) GetForTime(
 		  AND check_in_date < $3::date
 		ORDER BY check_in_date ASC, id ASC
 		LIMIT $4 OFFSET $5
-	`, userID, start, end, PageSize+1, offset)
+	`, userID, start, end, 2, page)
 	if err != nil {
 		return nil, fmt.Errorf("get bookings for time: %w", err)
 	}
 	defer rows.Close()
 
-	result := make([]Booking, 0, PageSize+1)
+	result := make([]Booking, 0, 2)
 
 	for rows.Next() {
 		var booking Booking

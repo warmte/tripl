@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	MaxPDFTextLength = 10000
+	MaxPDFTextLength = 3000
 )
 
 type PDFParser struct{}
