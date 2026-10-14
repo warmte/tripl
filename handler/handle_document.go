@@ -221,7 +221,7 @@ func (h *DocumentHandler) RunHandleResult(ctx context.Context) {
 func (h *DocumentHandler) handleResult(ctx context.Context, result DocumentResult) {
 	cfg := h.userService.GetLanguageCfg(ctx, result.ChatID)
 	if result.Err != nil {
-		h.api.Send(tgbotapi.NewMessage(result.ChatID, fmt.Sprintf(cfg.Errors.DocumentFailed)))
+		h.api.Send(tgbotapi.NewMessage(result.ChatID, cfg.Errors.DocumentFailed))
 		return
 	}
 
@@ -230,12 +230,12 @@ func (h *DocumentHandler) handleResult(ctx context.Context, result DocumentResul
 		for _, t := range result.Result {
 			added, err := h.ticketHandler.Add(ctx, t)
 			if err != nil {
-				h.api.Send(tgbotapi.NewMessage(result.ChatID, fmt.Sprintf(cfg.Errors.DocumentFailed)))
+				h.api.Send(tgbotapi.NewMessage(result.ChatID, cfg.Errors.DocumentFailed))
 				return
 			}
 			showAdded, err := h.ticketHandler.ShowSingle(ctx, result.ChatID, added.GetID(), cfg)
 			if err != nil {
-				h.api.Send(tgbotapi.NewMessage(result.ChatID, fmt.Sprintf(cfg.Errors.DocumentFailed)))
+				h.api.Send(tgbotapi.NewMessage(result.ChatID, cfg.Errors.DocumentFailed))
 				return
 			}
 			h.api.Send(tgbotapi.NewMessage(result.ChatID, cfg.DocumentFinished))
@@ -246,12 +246,12 @@ func (h *DocumentHandler) handleResult(ctx context.Context, result DocumentResul
 		for _, b := range result.Result {
 			added, err := h.bookingHandler.Add(ctx, b)
 			if err != nil {
-				h.api.Send(tgbotapi.NewMessage(result.ChatID, fmt.Sprintf(cfg.Errors.DocumentFailed)))
+				h.api.Send(tgbotapi.NewMessage(result.ChatID, cfg.Errors.DocumentFailed))
 				return
 			}
 			showAdded, err := h.bookingHandler.ShowSingle(ctx, result.ChatID, added.GetID(), cfg)
 			if err != nil {
-				h.api.Send(tgbotapi.NewMessage(result.ChatID, fmt.Sprintf(cfg.Errors.DocumentFailed)))
+				h.api.Send(tgbotapi.NewMessage(result.ChatID, cfg.Errors.DocumentFailed))
 				return
 			}
 			h.api.Send(tgbotapi.NewMessage(result.ChatID, cfg.DocumentFinished))
@@ -262,12 +262,12 @@ func (h *DocumentHandler) handleResult(ctx context.Context, result DocumentResul
 		for _, e := range result.Result {
 			added, err := h.eventHandler.Add(ctx, e)
 			if err != nil {
-				h.api.Send(tgbotapi.NewMessage(result.ChatID, fmt.Sprintf(cfg.Errors.DocumentFailed)))
+				h.api.Send(tgbotapi.NewMessage(result.ChatID, cfg.Errors.DocumentFailed))
 				return
 			}
 			showAdded, err := h.eventHandler.ShowSingle(ctx, result.ChatID, added.GetID(), cfg)
 			if err != nil {
-				h.api.Send(tgbotapi.NewMessage(result.ChatID, fmt.Sprintf(cfg.Errors.DocumentFailed)))
+				h.api.Send(tgbotapi.NewMessage(result.ChatID, cfg.Errors.DocumentFailed))
 				return
 			}
 			h.api.Send(tgbotapi.NewMessage(result.ChatID, cfg.DocumentFinished))

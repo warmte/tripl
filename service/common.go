@@ -47,11 +47,7 @@ func PreparePage[T TripObjectView](items []T, pageSize int) Page[T] {
 	}
 }
 
-func (s CommonService[T]) GetActualPage(
-	ctx context.Context,
-	userID int64,
-	page int,
-) (Page[T], error) {
+func (s CommonService[T]) GetActualPage(ctx context.Context, userID int64, page int) (Page[T], error) {
 	objects, err := s.repo.GetActualPage(ctx, userID, page)
 	if err != nil {
 		return Page[T]{},
@@ -83,12 +79,7 @@ func (s CommonService[T]) Create(ctx context.Context, data TripObjectView) (*T, 
 	return s.repo.Create(ctx, &value)
 }
 
-func (s CommonService[T]) GetPage(
-	ctx context.Context,
-	userID int64,
-	listType ListType,
-	page int,
-) (Page[T], error) {
+func (s CommonService[T]) GetPage(ctx context.Context, userID int64, listType ListType, page int) (Page[T], error) {
 
 	switch listType {
 	case ActualListType:
@@ -153,12 +144,7 @@ func (s CommonService[T]) AttachToTrip(
 		return fmt.Errorf("invalid user id: %d", userID)
 	}
 
-	if err := s.repo.AttachToTrip(
-		ctx,
-		objID,
-		tripID,
-		userID,
-	); err != nil {
+	if err := s.repo.AttachToTrip(ctx, objID, tripID, userID); err != nil {
 		return fmt.Errorf("attach to trip: %w", err)
 	}
 
@@ -178,11 +164,7 @@ func (s CommonService[T]) DetachFromTrip(
 		return fmt.Errorf("invalid user id: %d", userID)
 	}
 
-	if err := s.repo.DetachFromTrip(
-		ctx,
-		objID,
-		userID,
-	); err != nil {
+	if err := s.repo.DetachFromTrip(ctx, objID, userID); err != nil {
 		return fmt.Errorf("detach from trip: %w", err)
 	}
 
@@ -197,13 +179,7 @@ func (s CommonService[T]) CountByTripID(ctx context.Context, tripID int64, userI
 	return s.repo.CountByTripID(ctx, tripID, userID)
 }
 
-func (s CommonService[T]) GetPageForTime(
-	ctx context.Context,
-	userID int64,
-	start time.Time,
-	end time.Time,
-	page int,
-) (Page[T], error) {
+func (s CommonService[T]) GetPageForTime(ctx context.Context, userID int64, start time.Time, end time.Time, page int) (Page[T], error) {
 
 	objects, err := s.repo.GetForTime(ctx, userID, start, end, page)
 	if err != nil {
