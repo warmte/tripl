@@ -1,0 +1,9 @@
+.vscode/*
+tripl.exe
+__debug_bin.exe*
+.git
+.env
+.env.*
+!.env.example
+*.log
+coverage.out

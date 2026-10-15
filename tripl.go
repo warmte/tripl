@@ -52,7 +52,7 @@ func main() {
 	}
 
 	aiService := ai.NewAIService(
-		"http://localhost:8080/v1/chat/completions",
+		"http://llama-server:8080/v1/chat/completions",
 		"Qwen3-4B-Q4_K_M.gguf",
 	)
 	pdfService := document.NewPDFService(api)

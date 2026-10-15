@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"sync"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -222,6 +223,7 @@ func (h *DocumentHandler) handleResult(ctx context.Context, result DocumentResul
 	cfg := h.userService.GetLanguageCfg(ctx, result.ChatID)
 	if result.Err != nil {
 		h.api.Send(tgbotapi.NewMessage(result.ChatID, cfg.Errors.DocumentFailed))
+		log.Printf("document error: %v", result.Err)
 		return
 	}
 
@@ -231,11 +233,13 @@ func (h *DocumentHandler) handleResult(ctx context.Context, result DocumentResul
 			added, err := h.ticketHandler.Add(ctx, t)
 			if err != nil {
 				h.api.Send(tgbotapi.NewMessage(result.ChatID, cfg.Errors.DocumentFailed))
+				log.Printf("document error: %v", err)
 				return
 			}
 			showAdded, err := h.ticketHandler.ShowSingle(ctx, result.ChatID, added.GetID(), cfg)
 			if err != nil {
 				h.api.Send(tgbotapi.NewMessage(result.ChatID, cfg.Errors.DocumentFailed))
+				log.Printf("document error: %v", err)
 				return
 			}
 			h.api.Send(tgbotapi.NewMessage(result.ChatID, cfg.DocumentFinished))
@@ -247,11 +251,13 @@ func (h *DocumentHandler) handleResult(ctx context.Context, result DocumentResul
 			added, err := h.bookingHandler.Add(ctx, b)
 			if err != nil {
 				h.api.Send(tgbotapi.NewMessage(result.ChatID, cfg.Errors.DocumentFailed))
+				log.Printf("document error: %v", err)
 				return
 			}
 			showAdded, err := h.bookingHandler.ShowSingle(ctx, result.ChatID, added.GetID(), cfg)
 			if err != nil {
 				h.api.Send(tgbotapi.NewMessage(result.ChatID, cfg.Errors.DocumentFailed))
+				log.Printf("document error: %v", err)
 				return
 			}
 			h.api.Send(tgbotapi.NewMessage(result.ChatID, cfg.DocumentFinished))

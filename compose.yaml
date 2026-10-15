@@ -1,0 +1,55 @@
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      LLM_BASE_URL: http://llama-server:8080/v1
+      LLM_MODEL: Qwen3-4B
+    depends_on:
+      db:
+        condition: service_healthy
+      llama-server:
+        condition: service_started
+
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: tripl-test
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./internal/db/tables.sql:/docker-entrypoint-initdb.d/001-tables.sql:ro
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d tripl-test" ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  llama-server:
+    image: ghcr.io/ggml-org/llama.cpp:server
+    restart: unless-stopped
+    volumes:
+      - ${LLM_PATH}
+    command:
+      - -m
+      - /models/Qwen3-4B-Q4_K_M.gguf
+      - -c
+      - "2048"
+      - -t
+      - "2"
+      - -tb
+      - "2"
+      - -np
+      - "1"
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8080"
+      - "--perf"
+
+volumes:
+  postgres_data:

@@ -182,16 +182,13 @@ func (r UserRepository) TryConsume(
 		return false, errors.New("invalid user ID")
 	}
 
-	date = date.UTC()
-	day := date.Format(DateLayout)
-
 	tag, err := r.db.Exec(ctx, `
 		INSERT INTO user_daily_usage (user_id, usage_date, upload_count)
 		VALUES ($1, $2, 1)
 		ON CONFLICT (user_id, usage_date)
 		DO UPDATE SET upload_count = user_daily_usage.upload_count + 1
 		WHERE user_daily_usage.upload_count < $3
-	`, userID, day, limit)
+	`, userID, date.UTC(), limit)
 	if err != nil {
 		return false, fmt.Errorf("reserve daily upload: %w", err)
 	}
@@ -210,7 +207,7 @@ func (r UserRepository) GetCount(
 		SELECT upload_count
 		FROM user_daily_usage
 		WHERE user_id = $1 AND usage_date = $2
-	`, userID, date.UTC().Format(DateLayout)).Scan(&count)
+	`, userID, date.UTC()).Scan(&count)
 
 	if errors.Is(err, pgx.ErrNoRows) {
 		return 0, nil
@@ -226,7 +223,7 @@ func (r UserRepository) DeleteOlderThan(ctx context.Context, date time.Time) err
 	_, err := r.db.Exec(ctx, `
 		DELETE FROM user_daily_usage
 		WHERE usage_date < $1::date - 7
-	`, date.Format(DateLayout))
+	`, date.UTC())
 	if err != nil {
 		return fmt.Errorf("delete old daily usage: %w", err)
 	}

@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	defaultAIURL      = "http://localhost:8080/v1/chat/completions"
+	defaultAIURL      = "http://llama-server:8080/v1/chat/completions"
 	aiRequestTimeout  = 6 * 60 * time.Second
 	maxAIResponseSize = 1 * 1024 * 1024
 	aiMaxTokens       = 600
