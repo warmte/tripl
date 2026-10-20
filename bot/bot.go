@@ -168,7 +168,7 @@ func (bot Bot) matchAddMainFieldsObject(msg *tgbotapi.Message, tripObject *TripO
 		}
 		remainingUploads, err := bot.userService.GetRemaining(bot.ctx, msg.Chat.ID)
 		fileText := ""
-		if err == nil {
+		if err == nil && tripObject.Label != TripLabel {
 			fileText = fmt.Sprintf(cfg.AddAsFile, remainingUploads)
 		}
 		bot.replyWithKeyboard(

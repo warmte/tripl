@@ -144,7 +144,13 @@ func (h TicketHandler) HandleICSEndZone(
 	}
 
 	msg := tgbotapi.NewMessage(callback.From.ID, cfg.ICS.Success)
-	return []tgbotapi.Chattable{ics, msg}, nil
+
+	edit, err := h.HandleGetSingle(ctx, callback, objectID, cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	return []tgbotapi.Chattable{ics, msg, edit}, nil
 }
 
 // Booking
@@ -170,7 +176,12 @@ func (h BookingHandler) HandleMakeICS(
 	}
 
 	msg := tgbotapi.NewMessage(callback.From.ID, cfg.ICS.Success)
-	return []tgbotapi.Chattable{ics, msg}, nil
+
+	edit, err := h.HandleGetSingle(ctx, callback, objectID, cfg)
+	if err != nil {
+		return nil, err
+	}
+	return []tgbotapi.Chattable{ics, msg, edit}, nil
 }
 
 // Event
@@ -249,8 +260,13 @@ func (h EventHandler) HandleICSZone(
 		return nil, err
 	}
 
+	edit, err := h.HandleGetSingle(ctx, callback, objectID, cfg)
+	if err != nil {
+		return nil, err
+	}
+
 	msg := tgbotapi.NewMessage(callback.From.ID, cfg.ICS.Success)
-	return []tgbotapi.Chattable{ics, msg}, nil
+	return []tgbotapi.Chattable{ics, msg, edit}, nil
 }
 
 // utils
