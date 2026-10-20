@@ -8,6 +8,7 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	. "github.com/warmte/tripl/common"
 	"github.com/warmte/tripl/lang"
+	"github.com/warmte/tripl/service"
 )
 
 type CallbackHandler struct {
@@ -15,6 +16,7 @@ type CallbackHandler struct {
 	bookingHandler *BookingHandler
 	eventHandler   *EventHandler
 	tripHandler    *TripHandler
+	userService    *service.UserService
 }
 
 func NewCallbackHandler(
@@ -22,12 +24,14 @@ func NewCallbackHandler(
 	bookingHandler *BookingHandler,
 	eventHandler *EventHandler,
 	tripHandler *TripHandler,
+	userService *service.UserService,
 ) *CallbackHandler {
 	return &CallbackHandler{
 		ticketHandler:  ticketHandler,
 		bookingHandler: bookingHandler,
 		eventHandler:   eventHandler,
 		tripHandler:    tripHandler,
+		userService:    userService,
 	}
 }
 
@@ -101,6 +105,10 @@ func (h *CallbackHandler) Handle(
 		parsedCallback.Action,
 		parsedCallback.V1,
 	)
+
+	if parsedCallback.Action == EditSingle {
+		h.userService.SetState(callback.From.ID, service.Edit)
+	}
 
 	switch parsedCallback.Action {
 	case TripStats:

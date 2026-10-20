@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"runtime/debug"
 	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -46,13 +47,7 @@ func (s *NotificationSender) SendTomorrow(
 		return fmt.Errorf("get users: %w", err)
 	}
 	for _, user := range users {
-		if err := s.sendUserTomorrow(ctx, user.ID, location); err != nil {
-			log.Printf(
-				"scheduler: user %d: send tomorrow notification: %v",
-				user.ID,
-				err,
-			)
-		}
+		s.sendUserTomorrow(ctx, user.ID, location)
 	}
 
 	return nil
@@ -63,6 +58,12 @@ func (s *NotificationSender) sendUserTomorrow(
 	userID int64,
 	location *time.Location,
 ) error {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("panic on user notification %d: %v\n%s", userID, r, debug.Stack())
+		}
+	}()
+
 	cfg := s.userService.GetLanguageCfg(ctx, userID)
 
 	tomorrowTickets, errTickets := s.ticketHandler.ShowTomorrowList(ctx, userID, cfg)

@@ -191,8 +191,7 @@ func (h CommonHandler[T]) HandleEditSingle(
 		},
 	)
 
-	objectPtr, err := h.service.GetByID(ctx, callback.From.ID, objectID)
-	object := *objectPtr
+	object, err := h.service.GetByID(ctx, callback.From.ID, objectID)
 	if err != nil {
 		return nil, err
 	}
@@ -202,7 +201,7 @@ func (h CommonHandler[T]) HandleEditSingle(
 	text := fmt.Sprintf(
 		"%s.\n\n%s",
 		cfg.WhatEdit,
-		object.Show(&objectCfg),
+		(*object).Show(&objectCfg),
 	)
 
 	keyboard := tgbotapi.InlineKeyboardMarkup{
@@ -215,7 +214,6 @@ func (h CommonHandler[T]) HandleEditSingle(
 		text,
 		keyboard,
 	)
-
 	return &edit, nil
 }
 
@@ -314,8 +312,7 @@ func (h CommonHandler[T]) HandleEditReply(
 	if err := h.service.UpdateField(ctx, editCtx.ObjectID, msg.From.ID, field.Name, field.Value); err != nil {
 		return nil, err
 	}
-	objectCfg := TripObjectCfgByLabel(cfg, h.label)
-	replyMsg := BuildMsgWithKeyboard(msg.Chat.ID, cfg.Edited, BListAll(cfg, &objectCfg), cfg)
+	replyMsg := tgbotapi.NewMessage(msg.Chat.ID, cfg.Edited)
 	return replyMsg, nil
 }
 

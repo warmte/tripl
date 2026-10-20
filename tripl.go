@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"io"
 	"log"
 	"os"
 
@@ -16,9 +18,28 @@ import (
 	"github.com/warmte/tripl/service"
 )
 
+type redactWriter struct {
+	out    io.Writer
+	secret []byte
+}
+
+func (w redactWriter) Write(p []byte) (int, error) {
+	if _, err := w.out.Write(bytes.ReplaceAll(p, w.secret, []byte("<redacted>"))); err != nil {
+		return 0, err
+	}
+	return len(p), nil
+}
+
 func main() {
 	token := os.Getenv("TELEGRAM_BOT_TOKEN")
 	ctx := context.Background()
+
+	if token == "" {
+		log.Fatal("TELEGRAM_BOT_TOKEN is empty")
+	}
+	w := redactWriter{out: os.Stderr, secret: []byte(token)}
+	log.SetOutput(w)
+	tgbotapi.SetLogger(log.New(w, "", log.LstdFlags))
 
 	pool, err := db.New(ctx, os.Getenv("DATABASE_URL"))
 	if err != nil {
@@ -43,7 +64,7 @@ func main() {
 	eventsHandler := handler.NewEventHandler(*eventsService, *tripsService)
 	tripsHandler := handler.NewTripHandler(*tripsService)
 
-	callbackHandler := handler.NewCallbackHandler(ticketsHandler, bookingsHandler, eventsHandler, tripsHandler)
+	callbackHandler := handler.NewCallbackHandler(ticketsHandler, bookingsHandler, eventsHandler, tripsHandler, userService)
 	handlers := handler.NewHandlers(ticketsHandler, bookingsHandler, eventsHandler, tripsHandler)
 
 	api, err := tgbotapi.NewBotAPI(token)

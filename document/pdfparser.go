@@ -1,18 +1,22 @@
 package document
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
-	"io"
+	"os/exec"
+	"strconv"
 	"strings"
+	"time"
+	"unicode/utf8"
 
-	pdf "github.com/ledongthuc/pdf"
 	. "github.com/warmte/tripl/common"
 )
 
 const (
 	MaxPDFTextLength = 3000
+	pdfParseTimeout  = 20 * time.Second
 )
 
 type PDFParser struct{}
@@ -21,12 +25,7 @@ func NewPDFParser() *PDFParser {
 	return &PDFParser{}
 }
 
-var ErrPDFTextLimitReached = errors.New("pdf text limit reached")
-
-func (p *PDFParser) Parse(
-	ctx context.Context,
-	document *PDFDocument,
-) (string, error) {
+func (p *PDFParser) Parse(ctx context.Context, document *PDFDocument) (string, error) {
 	if document == nil {
 		return "", errors.New("pdf document is nil")
 	}
@@ -39,33 +38,48 @@ func (p *PDFParser) Parse(
 		return "", err
 	}
 
-	file, reader, err := pdf.Open(document.Path)
-	if err != nil {
-		return "", fmt.Errorf("open pdf: %w", err)
+	parseCtx, cancel := context.WithTimeout(ctx, pdfParseTimeout)
+	defer cancel()
+
+	cmd := exec.CommandContext(
+		parseCtx,
+		"pdftotext",
+		"-l", strconv.Itoa(MaxPDFPages),
+		"-enc", "UTF-8",
+		document.Path,
+		"-",
+	)
+
+	var output bytes.Buffer
+	cmd.Stdout = &output
+
+	if err := cmd.Run(); err != nil {
+		if parseCtx.Err() != nil {
+			return "", fmt.Errorf(
+				"pdftotext timed out or was canceled: %w",
+				parseCtx.Err(),
+			)
+		}
+
+		return "", fmt.Errorf("run pdftotext: %w", err)
 	}
-	defer file.Close()
 
-	textReader, err := reader.GetPlainText()
-	if err != nil {
-		return "", fmt.Errorf("extract pdf text: %w", err)
+	text := strings.TrimSpace(output.String())
+
+	if !utf8.ValidString(text) {
+		return "", errors.New("pdftotext returned invalid UTF-8")
 	}
 
-	limitedReader := io.LimitReader(textReader, MaxPDFTextLength+1)
-
-	data, err := io.ReadAll(limitedReader)
-	if err != nil {
-		return "", fmt.Errorf("read extracted pdf text: %w", err)
+	runes := []rune(text)
+	if len(runes) > MaxPDFTextLength {
+		text = string(runes[:MaxPDFTextLength])
 	}
 
-	if len(data) > MaxPDFTextLength {
-		data = data[:MaxPDFTextLength]
-	}
+	text = strings.TrimSpace(text)
 
-	result := strings.TrimSpace(string(data))
-
-	if result == "" {
+	if text == "" {
 		return "", ErrEmptyFile
 	}
 
-	return result, nil
+	return text, nil
 }
