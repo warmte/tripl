@@ -59,11 +59,31 @@ func (h *CallbackHandler) Handle(
 		default:
 			switch extended.Label {
 			case TicketLabel:
-				return h.ticketHandler.SelectExtendedAction(extended, ctx, callback, cfg)
+				switch extended.Action {
+				case ICSChooseRegion:
+					return h.ticketHandler.HandleICSStartRegion(callback, extended.V1, int(extended.V2), cfg)
+				case ICSChooseStart:
+					return h.ticketHandler.HandleICSStartZone(ctx, callback, extended.V1, extended.V2, cfg)
+				case ICSChooseEndRegion:
+
+					return h.ticketHandler.HandleICSEndRegion(callback, extended.V1, extended.V2, cfg)
+
+				case ICSChooseEnd:
+					return h.ticketHandler.HandleICSEndZone(ctx, callback, extended.V1, extended.V2, cfg)
+				default:
+					return h.ticketHandler.SelectExtendedAction(extended, ctx, callback, cfg)
+				}
 			case BookingLabel:
 				return h.bookingHandler.SelectExtendedAction(extended, ctx, callback, cfg)
 			case EventLabel:
-				return h.eventHandler.SelectExtendedAction(extended, ctx, callback, cfg)
+				switch extended.Action {
+				case ICSChooseRegion:
+					return h.eventHandler.HandleICSRegion(callback, extended.V1, int(extended.V2), cfg)
+				case ICSChooseStart:
+					return h.eventHandler.HandleICSZone(ctx, callback, extended.V1, extended.V2, cfg)
+				default:
+					return h.eventHandler.SelectExtendedAction(extended, ctx, callback, cfg)
+				}
 			case TripLabel:
 				return h.tripHandler.SelectExtendedAction(extended, ctx, callback, cfg)
 			}
@@ -89,11 +109,26 @@ func (h *CallbackHandler) Handle(
 	default:
 		switch parsedCallback.Label {
 		case TicketLabel:
-			return h.ticketHandler.SelectAction(parsedCallback, ctx, callback, cfg)
+			switch parsedCallback.Action {
+			case MakeIcs:
+				return h.ticketHandler.HandleMakeICS(ctx, callback, parsedCallback.V1, cfg)
+			default:
+				return h.ticketHandler.SelectAction(parsedCallback, ctx, callback, cfg)
+			}
 		case BookingLabel:
-			return h.bookingHandler.SelectAction(parsedCallback, ctx, callback, cfg)
+			switch parsedCallback.Action {
+			case MakeIcs:
+				return h.bookingHandler.HandleMakeICS(ctx, callback, parsedCallback.V1, cfg)
+			default:
+				return h.bookingHandler.SelectAction(parsedCallback, ctx, callback, cfg)
+			}
 		case EventLabel:
-			return h.eventHandler.SelectAction(parsedCallback, ctx, callback, cfg)
+			switch parsedCallback.Action {
+			case MakeIcs:
+				return h.eventHandler.HandleMakeICS(ctx, callback, parsedCallback.V1, cfg)
+			default:
+				return h.eventHandler.SelectAction(parsedCallback, ctx, callback, cfg)
+			}
 
 		case TripLabel:
 			switch parsedCallback.Action {

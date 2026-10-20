@@ -28,6 +28,7 @@
     "attach": "🔗 Attach",
     "detach": "🔓 Detach",
     "stats": "📄 Statistics",
+    "make_ics": "📆 Add to calendar",
     "lang": {
       "ru": "Русский",
       "en": "English",
@@ -156,5 +157,263 @@
     "empty_file": "The uploaded file is empty.",
     "document_failed": "Failed to process the document.",
     "daily_upload_limit_reached": "You have reached the daily upload limit. The limit resets at 00:00 Moscow time (UTC+03:00)."
+  },
+  "ics": {
+    "choose_zone": "Choose a time zone:",
+    "choose_start": "Choose the departure time zone:",
+    "choose_end": "Choose the arrival time zone:",
+    "success": "Add the event to your calendar by clicking this file.",
+    "regions": [
+      {
+        "name": "Russia",
+        "zones": [
+          {
+            "name": "Kaliningrad (UTC+2)",
+            "id": "Europe/Kaliningrad"
+          },
+          {
+            "name": "Moscow (UTC+3)",
+            "id": "Europe/Moscow"
+          },
+          {
+            "name": "Samara (UTC+4)",
+            "id": "Europe/Samara"
+          },
+          {
+            "name": "Yekaterinburg (UTC+5)",
+            "id": "Asia/Yekaterinburg"
+          },
+          {
+            "name": "Omsk (UTC+6)",
+            "id": "Asia/Omsk"
+          },
+          {
+            "name": "Novosibirsk (UTC+7)",
+            "id": "Asia/Novosibirsk"
+          },
+          {
+            "name": "Krasnoyarsk (UTC+7)",
+            "id": "Asia/Krasnoyarsk"
+          },
+          {
+            "name": "Irkutsk (UTC+8)",
+            "id": "Asia/Irkutsk"
+          },
+          {
+            "name": "Yakutsk (UTC+9)",
+            "id": "Asia/Yakutsk"
+          },
+          {
+            "name": "Vladivostok (UTC+10)",
+            "id": "Asia/Vladivostok"
+          },
+          {
+            "name": "Magadan (UTC+11)",
+            "id": "Asia/Magadan"
+          },
+          {
+            "name": "Kamchatka (UTC+12)",
+            "id": "Asia/Kamchatka"
+          }
+        ]
+      },
+      {
+        "name": "Europe",
+        "zones": [
+          {
+            "name": "London (UTC+0/1)",
+            "id": "Europe/London"
+          },
+          {
+            "name": "Lisbon (UTC+0/1)",
+            "id": "Europe/Lisbon"
+          },
+          {
+            "name": "Paris (UTC+1/2)",
+            "id": "Europe/Paris"
+          },
+          {
+            "name": "Berlin (UTC+1/2)",
+            "id": "Europe/Berlin"
+          },
+          {
+            "name": "Athens (UTC+2/3)",
+            "id": "Europe/Athens"
+          },
+          {
+            "name": "Istanbul (UTC+3)",
+            "id": "Europe/Istanbul"
+          },
+          {
+            "name": "Warsaw (UTC+1/2)",
+            "id": "Europe/Warsaw"
+          },
+          {
+            "name": "Rome (UTC+1/2)",
+            "id": "Europe/Rome"
+          },
+          {
+            "name": "Madrid (UTC+1/2)",
+            "id": "Europe/Madrid"
+          }
+        ]
+      },
+      {
+        "name": "Americas",
+        "zones": [
+          {
+            "name": "New York (UTC-5/-4)",
+            "id": "America/New_York"
+          },
+          {
+            "name": "Toronto (UTC-5/-4)",
+            "id": "America/Toronto"
+          },
+          {
+            "name": "Chicago (UTC-6/-5)",
+            "id": "America/Chicago"
+          },
+          {
+            "name": "Denver (UTC-7/-6)",
+            "id": "America/Denver"
+          },
+          {
+            "name": "Los Angeles (UTC-8/-7)",
+            "id": "America/Los_Angeles"
+          },
+          {
+            "name": "Vancouver (UTC-8/-7)",
+            "id": "America/Vancouver"
+          },
+          {
+            "name": "Mexico City (UTC-6)",
+            "id": "America/Mexico_City"
+          },
+          {
+            "name": "São Paulo (UTC-3)",
+            "id": "America/Sao_Paulo"
+          },
+          {
+            "name": "Buenos Aires (UTC-3)",
+            "id": "America/Argentina/Buenos_Aires"
+          },
+          {
+            "name": "Santiago (UTC-4/-3)",
+            "id": "America/Santiago"
+          }
+        ]
+      },
+      {
+        "name": "Asia",
+        "zones": [
+          {
+            "name": "Dubai (UTC+4)",
+            "id": "Asia/Dubai"
+          },
+          {
+            "name": "Tashkent (UTC+5)",
+            "id": "Asia/Tashkent"
+          },
+          {
+            "name": "Almaty (UTC+5)",
+            "id": "Asia/Almaty"
+          },
+          {
+            "name": "Bangkok (UTC+7)",
+            "id": "Asia/Bangkok"
+          },
+          {
+            "name": "Singapore (UTC+8)",
+            "id": "Asia/Singapore"
+          },
+          {
+            "name": "Hong Kong (UTC+8)",
+            "id": "Asia/Hong_Kong"
+          },
+          {
+            "name": "Shanghai (UTC+8)",
+            "id": "Asia/Shanghai"
+          },
+          {
+            "name": "Tokyo (UTC+9)",
+            "id": "Asia/Tokyo"
+          },
+          {
+            "name": "Seoul (UTC+9)",
+            "id": "Asia/Seoul"
+          },
+          {
+            "name": "Colombo (UTC+5:30)",
+            "id": "Asia/Colombo"
+          }
+        ]
+      },
+      {
+        "name": "Africa",
+        "zones": [
+          {
+            "name": "Cairo (UTC+2/3)",
+            "id": "Africa/Cairo"
+          },
+          {
+            "name": "Johannesburg (UTC+2)",
+            "id": "Africa/Johannesburg"
+          },
+          {
+            "name": "Nairobi (UTC+3)",
+            "id": "Africa/Nairobi"
+          },
+          {
+            "name": "Lagos (UTC+1)",
+            "id": "Africa/Lagos"
+          },
+          {
+            "name": "Casablanca (UTC+0/1)",
+            "id": "Africa/Casablanca"
+          },
+          {
+            "name": "Addis Ababa (UTC+3)",
+            "id": "Africa/Addis_Ababa"
+          }
+        ]
+      },
+      {
+        "name": "Oceania",
+        "zones": [
+          {
+            "name": "Perth (UTC+8)",
+            "id": "Australia/Perth"
+          },
+          {
+            "name": "Adelaide (UTC+9:30/10:30)",
+            "id": "Australia/Adelaide"
+          },
+          {
+            "name": "Sydney (UTC+10/11)",
+            "id": "Australia/Sydney"
+          },
+          {
+            "name": "Brisbane (UTC+10)",
+            "id": "Australia/Brisbane"
+          },
+          {
+            "name": "Melbourne (UTC+10/11)",
+            "id": "Australia/Melbourne"
+          },
+          {
+            "name": "Auckland (UTC+12/13)",
+            "id": "Pacific/Auckland"
+          },
+          {
+            "name": "Fiji (UTC+12/13)",
+            "id": "Pacific/Fiji"
+          },
+          {
+            "name": "Guam (UTC+10)",
+            "id": "Pacific/Guam"
+          }
+        ]
+      }
+    ]
   }
 }

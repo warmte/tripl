@@ -38,6 +38,7 @@ type ButtonsCfg struct {
 	Settings string  `json:"settings"`
 	Skip     string  `json:"skip"`
 	Stats    string  `json:"stats"`
+	MakeIcs  string  `json:"make_ics"`
 	Lang     LangCfg `json:"lang"`
 }
 
@@ -69,6 +70,24 @@ type ErrorsCfg struct {
 	ErrDailyUploadLimitReached string `json:"daily_upload_limit_reached"`
 }
 
+type ICSZone struct {
+	Name string `json:"name"`
+	ID   string `json:"id"`
+}
+
+type ICSRegion struct {
+	Name  string    `json:"name"`
+	Zones []ICSZone `json:"zones"`
+}
+
+type ICSCfg struct {
+	ChooseZone  string      `json:"choose_zone"`
+	ChooseStart string      `json:"choose_start"`
+	ChooseEnd   string      `json:"choose_end"`
+	Success     string      `json:"success"`
+	Regions     []ICSRegion `json:"regions"`
+}
+
 type Cfg struct {
 	Welcome           string         `json:"welcome"`
 	ChooseLang        string         `json:"choose_lang"`
@@ -91,6 +110,7 @@ type Cfg struct {
 	TomorrowPlans     string         `json:"tomorrow_plans"`
 	DocumentInProcess string         `json:"document_in_process"`
 	DocumentFinished  string         `json:"document_finished"`
+	ICS               ICSCfg         `json:"ics"`
 }
 
 //go:embed cfg/ru.json

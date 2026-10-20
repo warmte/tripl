@@ -27,6 +27,11 @@ const (
 	TripTickets           CallbackAction = "trips_tickets"
 	TripBookings          CallbackAction = "trips_bookings"
 	TripEvents            CallbackAction = "trips_events"
+	MakeIcs               CallbackAction = "make_ics"
+	ICSChooseRegion       CallbackAction = "ics_region"
+	ICSChooseStart        CallbackAction = "ics_start"
+	ICSChooseEndRegion    CallbackAction = "ics_end_region"
+	ICSChooseEnd          CallbackAction = "ics_end"
 )
 
 type Callback struct {
@@ -73,7 +78,7 @@ func parseCallback(data string) (Callback, error) {
 
 	action := CallbackAction(parts[1])
 	switch action {
-	case ActualList, ArchiveList, EditSingle, DeleteSingle, GetSingle, DeleteSingleConfirmed, DetachSingle, TripStats, TomorrowList:
+	case ActualList, ArchiveList, EditSingle, DeleteSingle, GetSingle, DeleteSingleConfirmed, DetachSingle, TripStats, TomorrowList, MakeIcs:
 	default:
 		return Callback{}, fmt.Errorf(
 			"unknown action: %q",
@@ -131,7 +136,7 @@ func parseExtendedCallback(data string) (ExtendedCallback, error) {
 
 	action := CallbackAction(parts[1])
 	switch action {
-	case AttachSingleActual, AttachSingleArchived, AttachTrip, EditField, TripTickets, TripBookings, TripEvents:
+	case AttachSingleActual, AttachSingleArchived, AttachTrip, EditField, TripTickets, TripBookings, TripEvents, ICSChooseRegion, ICSChooseStart, ICSChooseEndRegion, ICSChooseEnd:
 	default:
 		return ExtendedCallback{}, fmt.Errorf(
 			"unknown action: %q",

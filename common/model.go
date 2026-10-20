@@ -345,12 +345,18 @@ func (f Event) Show(cfg *lang.TripObjectCfg) string {
 	addField(
 		&lines,
 		cfg.OtherFields[1],
-		f.Currency,
+		f.Cost,
 	)
 
 	addField(
 		&lines,
 		cfg.OtherFields[2],
+		f.Currency,
+	)
+
+	addField(
+		&lines,
+		cfg.OtherFields[3],
 		f.Comment,
 	)
 

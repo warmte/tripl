@@ -179,10 +179,7 @@ func (h CommonHandler[T]) HandleEditSingle(
 		rows = append(
 			rows,
 			[]tgbotapi.InlineKeyboardButton{
-				tgbotapi.NewInlineKeyboardButtonData(
-					fmt.Sprintf("%s", field.Name),
-					makeEditCallback(h.label, objectID, field.ID),
-				),
+				button(fmt.Sprintf("%s", field.Name), makeEditCallback(h.label, objectID, field.ID)),
 			},
 		)
 	}
@@ -190,10 +187,7 @@ func (h CommonHandler[T]) HandleEditSingle(
 	rows = append(
 		rows,
 		[]tgbotapi.InlineKeyboardButton{
-			tgbotapi.NewInlineKeyboardButtonData(
-				cfg.Buttons.Back,
-				fmt.Sprintf("%s:%s:%d", h.label, GetSingle, objectID),
-			),
+			button(cfg.Buttons.Back, MakeCallback(h.label, GetSingle, objectID)),
 		},
 	)
 

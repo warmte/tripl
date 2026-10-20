@@ -278,10 +278,12 @@ func makeSingleKeyboard(label Label, objectID int64, tripID *int64, cfg *lang.Cf
 		if tripID != nil {
 			tripButton = button(cfg.Buttons.Detach, MakeCallback(label, DetachSingle, objectID))
 		}
+		icsButton := button(cfg.Buttons.MakeIcs, MakeCallback(label, MakeIcs, objectID))
 
 		keyboard = tgbotapi.InlineKeyboardMarkup{
 			InlineKeyboard: [][]tgbotapi.InlineKeyboardButton{
 				{tripButton, editButton, deleteButton},
+				{icsButton},
 			},
 		}
 	} else {

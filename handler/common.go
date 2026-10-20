@@ -50,6 +50,7 @@ func (h CommonHandler[T]) SelectAction(
 	case TomorrowList:
 		r, err := h.HandleTomorrowList(ctx, callback, int(parsedCallback.V1), cfg)
 		return []tgbotapi.Chattable{r}, err
+
 	default:
 		return nil, unsupportedCallbackError
 	}
