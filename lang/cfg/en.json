@@ -44,7 +44,7 @@
       "empty": "No tickets",
       "add_main_fields": "Enter the following fields, one per line. Enter the date and time in this format: `dd.mm.yyyy hh:mm`.",
       "add_other_fields": "Enter the additional fields. If a field is not needed, enter a dash: `-`.",
-      "add_other_fields_tips": "- Enter the price as a single number so the ticket is included in trip statistics.\n- Specify the currency using its symbol or code. Examples: `₽`, `¥`, `$`, `€`, `£`.\n- Comments can be up to 256 characters long.",
+      "add_other_fields_tips": "- Enter the price as a single number so the ticket is included in trip statistics.\n- Comments can be up to 256 characters long.",
       "main_fields": [
         "Transport",
         "Departure point",
@@ -74,7 +74,7 @@
       "empty": "No bookings",
       "add_main_fields": "Enter the following fields, one per line. Enter the dates in this format: `dd.mm.yyyy`.",
       "add_other_fields": "Enter the additional fields. If a field is not needed, enter a dash: `-`.",
-      "add_other_fields_tips": "- Enter the time in this format: `hh:mm`.\n- Enter the price as a single number so the booking is included in trip statistics.\n- Specify the currency using its symbol or code. Examples: `₽`, `¥`, `$`, `€`, `£`.\n- Comments can be up to 256 characters long.",
+      "add_other_fields_tips": "- Enter the time in this format: `hh:mm`.\n- Enter the price as a single number so the booking is included in trip statistics.\n- Comments can be up to 256 characters long.",
       "main_fields": [
         "City",
         "Hotel or location name",
@@ -103,7 +103,7 @@
       "empty": "No events",
       "add_main_fields": "Enter the following fields, one per line. Enter the date and time in this format: `dd.mm.yyyy hh:mm`.",
       "add_other_fields": "Enter the additional fields. If a field is not needed, enter a dash: `-`.",
-      "add_other_fields_tips": "- Enter the date and time in this format: `dd.mm.yyyy hh:mm`.\n- Enter the price as a single number so the event is included in trip statistics.\n- Specify the currency using its symbol or code. Examples: `₽`, `¥`, `$`, `€`, `£`.\n- Comments can be up to 256 characters long.",
+      "add_other_fields_tips": "- Enter the date and time in this format: `dd.mm.yyyy hh:mm`.\n- Enter the price as a single number so the event is included in trip statistics.\n- Comments can be up to 256 characters long.",
       "main_fields": [
         "Event name",
         "Location",

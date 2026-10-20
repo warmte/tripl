@@ -27,7 +27,7 @@ func ICSContent(obj TripObjectView, startZone, endZone string, cfg *lang.Cfg) ([
 		}
 
 		uid = fmt.Sprintf("ticket-%d@tripl", v.ID)
-		summary, location = icsTicketSummary(v), icsTicketLocation(v)
+		summary = icsTicketSummary(v, cfg)
 
 		start, err = icsLocalTime(*v.DepartureTime, startZone)
 		if err != nil {
@@ -47,7 +47,7 @@ func ICSContent(obj TripObjectView, startZone, endZone string, cfg *lang.Cfg) ([
 			return nil, ErrDatetimeRestraint
 		}
 
-		uid, summary, allDay = fmt.Sprintf("booking-%d@tripl", v.ID), icsBookingSummary(v), true
+		uid, summary, allDay = fmt.Sprintf("booking-%d@tripl", v.ID), icsBookingSummary(v, cfg), true
 		start = *v.CheckInDate
 		end = start.AddDate(0, 0, 1)
 		if v.CheckOutDate != nil {
@@ -151,7 +151,7 @@ func icsLocalTime(value time.Time, zone string) (time.Time, error) {
 	).UTC(), nil
 }
 
-func icsTicketSummary(v Ticket) string {
+func icsTicketSummary(v Ticket, cfg *lang.Cfg) string {
 	var parts []string
 	for _, s := range []*string{v.Vehicle, v.DeparturePoint, v.ArrivalPoint} {
 		if s != nil && *s != "" {
@@ -159,27 +159,17 @@ func icsTicketSummary(v Ticket) string {
 		}
 	}
 	if len(parts) == 0 {
-		return fmt.Sprintf("Билет #%d", v.ID)
+		return fmt.Sprintf("%s №%d", cfg.TripObjects.Ticket.One, v.ID)
 	}
-	return strings.Join(parts, " → ")
+	return strings.Join(parts, " — ")
 }
 
-func icsTicketLocation(v Ticket) string {
-	var parts []string
-	for _, s := range []*string{v.DepartureAddress, v.ArrivalAddress} {
-		if s != nil && *s != "" {
-			parts = append(parts, *s)
-		}
-	}
-	return strings.Join(parts, " → ")
-}
-
-func icsBookingSummary(v Booking) string {
+func icsBookingSummary(v Booking, cfg *lang.Cfg) string {
 	var parts []string
 	if v.Place != nil && *v.Place != "" {
 		parts = append(parts, *v.Place)
 	} else {
-		parts = append(parts, fmt.Sprintf("Бронирование #%d", v.ID))
+		parts = append(parts, fmt.Sprintf("%s №%d", cfg.TripObjects.Booking.One, v.ID))
 	}
 	if v.City != nil && *v.City != "" {
 		parts = append(parts, *v.City)

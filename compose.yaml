@@ -6,7 +6,7 @@ services:
       - .env
     environment:
       LLM_BASE_URL: http://llama-server:8080/v1
-      LLM_MODEL: Qwen3-4B
+      LLM_MODEL: Qwen3-1.7B-Q8_0.gguf
     depends_on:
       db:
         condition: service_healthy
@@ -36,7 +36,7 @@ services:
       - ${LLM_PATH}
     command:
       - -m
-      - /models/Qwen3-4B-Q4_K_M.gguf
+      - /models/Qwen3-1.7B-Q8_0.gguf
       - -c
       - "2048"
       - -t
