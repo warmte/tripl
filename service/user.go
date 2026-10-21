@@ -49,7 +49,6 @@ var (
 	Default State = State{"", EmptyContext{}}
 	AddInfo State = State{"add_info", EmptyContext{}}
 	Added   State = State{"added", EmptyContext{}}
-	Edit    State = State{"edit", EmptyContext{}}
 )
 
 type UserService struct {

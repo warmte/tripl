@@ -34,7 +34,7 @@ func makeEditCallback(label Label, objectID int64, fieldID int) string {
 	)
 }
 
-func parseEditContext(text string, cfg *lang.Cfg) (editContext, error) {
+func ParseEditContext(text string, cfg *lang.Cfg) (editContext, error) {
 	var editContextRe = regexp.MustCompile(
 		fmt.Sprintf(
 			`(?m)^%s\s*\n\[(\d+)\]\s*[^,\r\n]+,\s*(%s|%s|%s|%s)\s+№(\d+)`,
@@ -286,7 +286,7 @@ func (h CommonHandler[T]) HandleEditReply(
 		return nil, nil
 	}
 
-	editCtx, err := parseEditContext(msg.ReplyToMessage.Text, cfg)
+	editCtx, err := ParseEditContext(msg.ReplyToMessage.Text, cfg)
 	if err != nil {
 		return nil, nil
 	}

@@ -106,10 +106,6 @@ func (h *CallbackHandler) Handle(
 		parsedCallback.V1,
 	)
 
-	if parsedCallback.Action == EditSingle {
-		h.userService.SetState(callback.From.ID, service.Edit)
-	}
-
 	switch parsedCallback.Action {
 	case TripStats:
 		r, err := h.HandleTripStats(ctx, callback, parsedCallback.V1, cfg)

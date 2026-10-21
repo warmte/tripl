@@ -314,14 +314,10 @@ func (bot Bot) handleUpdate(update tgbotapi.Update) {
 			msg := update.Message
 			log.Printf("[%s] %s", msg.From.UserName, msg.Text)
 			langCfg := bot.userService.GetLanguageCfg(bot.ctx, msg.Chat.ID)
-			if msg.ReplyToMessage != nil && bot.userService.GetState(msg.Chat.ID) == service.Edit {
+			_, err := handler.ParseEditContext(msg.ReplyToMessage.Text, langCfg)
+			if msg.ReplyToMessage != nil && msg.ReplyToMessage.From != nil && msg.ReplyToMessage.From.ID == bot.api.Self.ID && err == nil {
 				{
-					bot.userService.SetState(msg.Chat.ID, service.Default)
-					message, err := bot.handlers.HandleEditReply(
-						bot.ctx,
-						update.Message,
-						langCfg,
-					)
+					message, err := bot.handlers.HandleEditReply(bot.ctx, update.Message, langCfg)
 					if err != nil {
 						bot.replyForError(update.Message.Chat.ID, err, langCfg)
 					} else {

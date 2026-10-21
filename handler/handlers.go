@@ -177,7 +177,7 @@ func (h *Handlers) HandleEditReply(
 		return nil, nil
 	}
 
-	editCtx, err := parseEditContext(msg.ReplyToMessage.Text, cfg)
+	editCtx, err := ParseEditContext(msg.ReplyToMessage.Text, cfg)
 	if err != nil {
 		return nil, nil
 	}
