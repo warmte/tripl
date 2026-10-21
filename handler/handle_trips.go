@@ -46,7 +46,7 @@ func costsToString(costs map[string]float64) string {
 	parts := make([]string, 0, len(costs))
 
 	for currency, amount := range costs {
-		parts = append(parts, fmt.Sprintf("%g %s", strconv.FormatFloat(amount, 'f', -1, 64), currency))
+		parts = append(parts, fmt.Sprintf("%s %s", strconv.FormatFloat(amount, 'f', -1, 64), currency))
 	}
 
 	return strings.Join(parts, ", ")
