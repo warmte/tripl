@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS trips (
     end_date DATE,
     comment VARCHAR(256),
 
-    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS tickets (
@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS tickets (
     number VARCHAR(256),
     comment VARCHAR(256),
 
-    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS bookings (
@@ -56,7 +56,7 @@ CREATE TABLE IF NOT EXISTS bookings (
     number VARCHAR(256),
     comment VARCHAR(256),
 
-    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS events (
@@ -73,7 +73,7 @@ CREATE TABLE IF NOT EXISTS events (
     currency VARCHAR(16),
     comment VARCHAR(256),
 
-    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS user_daily_usage (
