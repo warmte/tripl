@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -27,6 +28,7 @@ func NewTicketRepository(db *pgxpool.Pool) *TicketRepository {
 
 func (r TicketRepository) Create(ctx context.Context, ticket *Ticket) (*Ticket, error) {
 	var ticketResult Ticket
+	log.Println(*ticket.Currency)
 
 	err := r.db.QueryRow(
 		ctx,

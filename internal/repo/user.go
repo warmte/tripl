@@ -35,7 +35,7 @@ func (r *UserRepository) GetOrCreate(
 		`INSERT INTO users (id, language)
 		 VALUES ($1, $2)
 		 ON CONFLICT (id)
-		 DO UPDATE SET id = users.telegram_id
+		 DO UPDATE SET id = users.id
 		 RETURNING id, language, created_at`,
 		userID,
 		language,
@@ -54,7 +54,7 @@ func (r *UserRepository) GetOrCreate(
 
 func (r *UserRepository) UpdateLangOrCreate(
 	ctx context.Context,
-	telegramID int64,
+	userID int64,
 	language lang.Language,
 ) (*User, error) {
 	var user User
@@ -66,7 +66,7 @@ func (r *UserRepository) UpdateLangOrCreate(
 		 ON CONFLICT (id)
 		 DO UPDATE SET language = users.language
 		 RETURNING id, language, created_at`,
-		telegramID,
+		userID,
 		language,
 	).Scan(
 		&user.ID,

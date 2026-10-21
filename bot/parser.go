@@ -96,7 +96,7 @@ func parseTicketOtherFields(input string, ticket *Ticket) (Ticket, error) {
 		DepartureTime:    ticket.DepartureTime,
 		ArrivalTime:      ticket.ArrivalTime,
 		Cost:             opt(NormalizeCost(lines[0])),
-		Currency:         opt(NormalizeCurrency(lines[2])),
+		Currency:         opt(NormalizeCurrency(lines[1])),
 		DepartureAddress: opt(lines[2]),
 		ArrivalAddress:   opt(lines[3]),
 		Seat:             opt(lines[4]),
