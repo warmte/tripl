@@ -45,7 +45,6 @@ func (bot Bot) replyWithKeyboard(userID int64, text string, buttons [][]string, 
 }
 
 func (bot Bot) replyForError(userID int64, err error, cfg *lang.Cfg) {
-	bot.userService.SetState(userID, service.Default)
 	bot.replyWithKeyboard(userID, GetErrorMessage(err, *cfg), [][]string{{cfg.Buttons.Cancel}}, cfg)
 	log.Printf("internal error: %v", err)
 }
