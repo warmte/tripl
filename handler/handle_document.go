@@ -49,6 +49,10 @@ type DocumentHandler struct {
 	results chan DocumentResult
 
 	wg sync.WaitGroup
+
+	stopCh       chan struct{}
+	stopped      bool
+	shutdownOnce sync.Once
 }
 
 func NewDocumentHandler(
@@ -72,6 +76,7 @@ func NewDocumentHandler(
 		eventHandler:   eventHandler,
 		notify:         make(chan struct{}, 1),
 		results:        make(chan DocumentResult),
+		stopCh:         make(chan struct{}),
 	}
 
 	h.wg.Add(workersCount)
@@ -91,7 +96,6 @@ func (h *DocumentHandler) Handle(
 	if message == nil {
 		return errors.New("message is nil")
 	}
-
 	if message.Document == nil {
 		return errors.New("document is nil")
 	}
@@ -104,6 +108,10 @@ func (h *DocumentHandler) Handle(
 	}
 
 	h.mu.Lock()
+	if h.stopped {
+		h.mu.Unlock()
+		return errors.New("document handler is shutting down")
+	}
 	h.queue = append(h.queue, task)
 	h.mu.Unlock()
 
@@ -113,6 +121,17 @@ func (h *DocumentHandler) Handle(
 	}
 
 	return nil
+}
+
+func (h *DocumentHandler) Shutdown() {
+	h.shutdownOnce.Do(func() {
+		h.mu.Lock()
+		h.stopped = true
+		close(h.stopCh)
+		h.mu.Unlock()
+		h.wg.Wait()
+		close(h.results)
+	})
 }
 
 func (h *DocumentHandler) worker() {
@@ -130,8 +149,17 @@ func (h *DocumentHandler) worker() {
 			continue
 		}
 
+		if h.stopped {
+			h.mu.Unlock()
+			return
+		}
+
 		h.mu.Unlock()
-		<-h.notify
+
+		select {
+		case <-h.notify:
+		case <-h.stopCh:
+		}
 	}
 }
 
@@ -205,17 +233,8 @@ func (h *DocumentHandler) process(task documentTask) {
 }
 
 func (h *DocumentHandler) RunHandleResult(ctx context.Context) {
-	for {
-		select {
-		case <-ctx.Done():
-			return
-
-		case result, ok := <-h.results:
-			if !ok {
-				return
-			}
-			h.handleResult(ctx, result)
-		}
+	for result := range h.results {
+		h.handleResult(ctx, result)
 	}
 }
 
@@ -226,6 +245,8 @@ func (h *DocumentHandler) handleResult(ctx context.Context, result DocumentResul
 		log.Printf("document error: %v", result.Err)
 		return
 	}
+
+	msgs := []tgbotapi.MessageConfig{}
 
 	switch result.Label {
 	case TicketLabel:
@@ -242,8 +263,7 @@ func (h *DocumentHandler) handleResult(ctx context.Context, result DocumentResul
 				log.Printf("document error: %v", err)
 				return
 			}
-			h.api.Send(tgbotapi.NewMessage(result.ChatID, cfg.DocumentFinished))
-			h.api.Send(*showAdded)
+			msgs = append(msgs, *showAdded)
 		}
 
 	case BookingLabel:
@@ -260,8 +280,7 @@ func (h *DocumentHandler) handleResult(ctx context.Context, result DocumentResul
 				log.Printf("document error: %v", err)
 				return
 			}
-			h.api.Send(tgbotapi.NewMessage(result.ChatID, cfg.DocumentFinished))
-			h.api.Send(*showAdded)
+			msgs = append(msgs, *showAdded)
 		}
 
 	case EventLabel:
@@ -269,15 +288,22 @@ func (h *DocumentHandler) handleResult(ctx context.Context, result DocumentResul
 			added, err := h.eventHandler.Add(ctx, e)
 			if err != nil {
 				h.api.Send(tgbotapi.NewMessage(result.ChatID, cfg.Errors.DocumentFailed))
+				log.Printf("document error: %v", err)
 				return
 			}
 			showAdded, err := h.eventHandler.ShowSingle(ctx, result.ChatID, added.GetID(), cfg)
 			if err != nil {
 				h.api.Send(tgbotapi.NewMessage(result.ChatID, cfg.Errors.DocumentFailed))
+				log.Printf("document error: %v", err)
 				return
 			}
-			h.api.Send(tgbotapi.NewMessage(result.ChatID, cfg.DocumentFinished))
-			h.api.Send(*showAdded)
+			msgs = append(msgs, *showAdded)
 		}
+	}
+	if len(msgs) > 0 {
+		for _, msg := range msgs {
+			h.api.Send(msg)
+		}
+		h.api.Send(tgbotapi.NewMessage(result.ChatID, cfg.DocumentFinished))
 	}
 }

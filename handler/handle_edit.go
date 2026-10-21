@@ -369,13 +369,15 @@ func parseTicketEditValue(fieldID int, value string) (parsedEditValue, error) {
 		if value == "-" {
 			return parsedEditValue{"cost", nil}, nil
 		}
-		return parsedEditValue{"cost", &value}, nil
+		nValue := NormalizeCost(value)
+		return parsedEditValue{"cost", &nValue}, nil
 
 	case 6:
 		if value == "-" {
 			return parsedEditValue{"currency", nil}, nil
 		}
-		return parsedEditValue{"currency", &value}, nil
+		nValue := NormalizeCurrency(value)
+		return parsedEditValue{"currency", &nValue}, nil
 
 	case 7:
 		if value == "-" {
@@ -438,13 +440,15 @@ func parseBookingEditValue(fieldID int, value string) (parsedEditValue, error) {
 		if value == "-" {
 			return parsedEditValue{"cost", nil}, nil
 		}
-		return parsedEditValue{"cost", &value}, nil
+		nValue := NormalizeCost(value)
+		return parsedEditValue{"cost", &nValue}, nil
 
 	case 5:
 		if value == "-" {
 			return parsedEditValue{"currency", nil}, nil
 		}
-		return parsedEditValue{"currency", &value}, nil
+		nValue := NormalizeCurrency(value)
+		return parsedEditValue{"currency", &nValue}, nil
 
 	case 6:
 		if value == "-" {
@@ -524,13 +528,15 @@ func parseEventEditValue(fieldID int, value string) (parsedEditValue, error) {
 		if value == "-" {
 			return parsedEditValue{"cost", nil}, nil
 		}
-		return parsedEditValue{"cost", &value}, nil
+		nValue := NormalizeCost(value)
+		return parsedEditValue{"cost", &nValue}, nil
 
 	case 5:
 		if value == "-" {
 			return parsedEditValue{"currency", nil}, nil
 		}
-		return parsedEditValue{"currency", &value}, nil
+		nValue := NormalizeCurrency(value)
+		return parsedEditValue{"currency", &nValue}, nil
 
 	case 6:
 		if value == "-" {

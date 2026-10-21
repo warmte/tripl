@@ -599,6 +599,67 @@ func (r BookingRepository) GetPageByTripID(ctx context.Context, tripID int64, us
 	return result, nil
 }
 
+func (r BookingRepository) GetAllByTripID(ctx context.Context, tripID int64, userID int64) ([]Booking, error) {
+	rows, err := r.db.Query(ctx, `
+		SELECT
+			id,
+			user_id,
+			trip_id,
+			city,
+			place,
+			check_in_date,
+			check_out_date,
+			cost,
+			currency,
+			address,
+			check_in_time,
+			check_out_time,
+			number,
+			comment
+		FROM bookings
+		WHERE user_id = $1
+		  AND trip_id = $2
+		ORDER BY check_in_date ASC, id ASC
+	`, userID, tripID)
+	if err != nil {
+		return nil, fmt.Errorf("get bookings page by trip id: %w", err)
+	}
+	defer rows.Close()
+
+	var result []Booking
+
+	for rows.Next() {
+		var booking Booking
+
+		if err := rows.Scan(
+			&booking.ID,
+			&booking.UserID,
+			&booking.TripID,
+			&booking.City,
+			&booking.Place,
+			&booking.CheckInDate,
+			&booking.CheckOutDate,
+			&booking.Cost,
+			&booking.Currency,
+			&booking.Address,
+			&booking.CheckInTime,
+			&booking.CheckOutTime,
+			&booking.Number,
+			&booking.Comment,
+		); err != nil {
+			return nil, fmt.Errorf("scan booking: %w", err)
+		}
+
+		result = append(result, booking)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate bookings: %w", err)
+	}
+
+	return result, nil
+}
+
 func (r BookingRepository) GetForTime(
 	ctx context.Context,
 	userID int64,

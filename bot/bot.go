@@ -294,12 +294,9 @@ func (bot Bot) handleUpdate(update tgbotapi.Update) {
 		}
 
 		langCfg := bot.userService.GetLanguageCfg(bot.ctx, callback.From.ID)
-		msgs, err := bot.callbackHandler.Handle(
-			bot.ctx,
-			callback,
-			langCfg,
-		)
+		msgs, err := bot.callbackHandler.Handle(bot.ctx, callback, langCfg)
 		if err != nil {
+			bot.replyForError(callback.From.ID, err, langCfg)
 			log.Printf("callback: %v", err)
 			break
 		}
@@ -307,6 +304,7 @@ func (bot Bot) handleUpdate(update tgbotapi.Update) {
 		for _, msg := range msgs {
 			if msg != nil {
 				if _, err := bot.api.Send(msg); err != nil {
+					bot.replyForError(callback.From.ID, err, langCfg)
 					log.Printf("callback edit: %v", err)
 				}
 			}
@@ -374,7 +372,7 @@ func (bot Bot) handleUpdate(update tgbotapi.Update) {
 				bot.replyWithKeyboard(msg.Chat.ID, newLangCfg.Menu, BMain(newLangCfg), newLangCfg)
 			} else if bot.matchShowSingle(msg, langCfg) {
 			} else {
-				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "unknown command")
+				msg := tgbotapi.NewMessage(update.Message.Chat.ID, langCfg.UnknownCmd)
 				msg.ReplyToMessageID = update.Message.MessageID
 				bot.api.Send(msg)
 			}
@@ -382,16 +380,23 @@ func (bot Bot) handleUpdate(update tgbotapi.Update) {
 	}
 }
 
-func (bot *Bot) Run() {
-	bot.api.Debug = true
-
+func (bot *Bot) Run(shutdownCtx context.Context) {
 	log.Printf("Authorized on account %s", bot.api.Self.UserName)
 
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
 
 	updates := bot.api.GetUpdatesChan(u)
+
+	go func() {
+		<-shutdownCtx.Done()
+		bot.api.StopReceivingUpdates()
+	}()
+
 	for update := range updates {
+		if bot.ctx.Err() != nil {
+			break
+		}
 		bot.handleUpdate(update)
 	}
 }

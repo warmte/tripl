@@ -41,8 +41,18 @@ func hasTooLongField(fields ...string) bool {
 	return false
 }
 
+func splitFields(input string) []string {
+	var fields []string
+	for _, line := range strings.Split(input, "\n") {
+		if line = strings.TrimSpace(line); line != "" {
+			fields = append(fields, line)
+		}
+	}
+	return fields
+}
+
 func parseTicketMainFields(input string, userID int64) (Ticket, error) {
-	lines := strings.Split(input, "\n")
+	lines := splitFields(input)
 	if len(lines) != 5 {
 		return Ticket{}, ErrIncorrectNumberOfFields
 	}
@@ -70,7 +80,7 @@ func parseTicketMainFields(input string, userID int64) (Ticket, error) {
 }
 
 func parseTicketOtherFields(input string, ticket *Ticket) (Ticket, error) {
-	lines := strings.Split(input, "\n")
+	lines := splitFields(input)
 	if len(lines) != 7 {
 		return Ticket{}, ErrIncorrectNumberOfFields
 	}
@@ -85,8 +95,8 @@ func parseTicketOtherFields(input string, ticket *Ticket) (Ticket, error) {
 		ArrivalPoint:     ticket.ArrivalPoint,
 		DepartureTime:    ticket.DepartureTime,
 		ArrivalTime:      ticket.ArrivalTime,
-		Cost:             opt(lines[0]),
-		Currency:         opt(lines[1]),
+		Cost:             opt(NormalizeCost(lines[0])),
+		Currency:         opt(NormalizeCurrency(lines[2])),
 		DepartureAddress: opt(lines[2]),
 		ArrivalAddress:   opt(lines[3]),
 		Seat:             opt(lines[4]),
@@ -96,7 +106,7 @@ func parseTicketOtherFields(input string, ticket *Ticket) (Ticket, error) {
 }
 
 func parseBookingMainFields(input string, userID int64) (Booking, error) {
-	lines := strings.Split(input, "\n")
+	lines := splitFields(input)
 	if len(lines) != 4 {
 		return Booking{}, ErrIncorrectNumberOfFields
 	}
@@ -123,7 +133,7 @@ func parseBookingMainFields(input string, userID int64) (Booking, error) {
 }
 
 func parseBookingOtherFields(input string, booking *Booking) (Booking, error) {
-	lines := strings.Split(input, "\n")
+	lines := splitFields(input)
 	if len(lines) != 7 {
 		return Booking{}, ErrIncorrectNumberOfFields
 	}
@@ -146,8 +156,8 @@ func parseBookingOtherFields(input string, booking *Booking) (Booking, error) {
 		Place:        booking.Place,
 		CheckInDate:  booking.CheckInDate,
 		CheckOutDate: booking.CheckOutDate,
-		Cost:         opt(lines[0]),
-		Currency:     opt(lines[1]),
+		Cost:         opt(NormalizeCost(lines[0])),
+		Currency:     opt(NormalizeCurrency(lines[1])),
 		Address:      opt(lines[2]),
 		CheckInTime:  checkInTime,
 		CheckOutTime: checkOutTime,
@@ -157,7 +167,7 @@ func parseBookingOtherFields(input string, booking *Booking) (Booking, error) {
 }
 
 func parseEventMainFields(input string, userID int64) (Event, error) {
-	lines := strings.Split(input, "\n")
+	lines := splitFields(input)
 	if len(lines) != 3 {
 		return Event{}, ErrIncorrectNumberOfFields
 	}
@@ -179,7 +189,7 @@ func parseEventMainFields(input string, userID int64) (Event, error) {
 }
 
 func parseEventOtherFields(input string, event *Event) (Event, error) {
-	lines := strings.Split(input, "\n")
+	lines := splitFields(input)
 	if len(lines) != 4 {
 		return Event{}, ErrIncorrectNumberOfFields
 	}
@@ -198,14 +208,14 @@ func parseEventOtherFields(input string, event *Event) (Event, error) {
 		Location:  event.Location,
 		StartTime: event.StartTime,
 		EndTime:   endTime,
-		Cost:      opt(lines[1]),
-		Currency:  opt(lines[2]),
+		Cost:      opt(NormalizeCost(lines[1])),
+		Currency:  opt(NormalizeCurrency(lines[2])),
 		Comment:   opt(lines[3]),
 	}, nil
 }
 
 func parseTripMainFields(input string, userID int64) (Trip, error) {
-	lines := strings.Split(input, "\n")
+	lines := splitFields(input)
 	if len(lines) != 3 {
 		return Trip{}, ErrIncorrectNumberOfFields
 	}
@@ -231,7 +241,7 @@ func parseTripMainFields(input string, userID int64) (Trip, error) {
 }
 
 func parseTripOtherFields(input string, trip *Trip) (Trip, error) {
-	lines := strings.Split(input, "\n")
+	lines := splitFields(input)
 	if len(lines) != 1 {
 		return Trip{}, ErrIncorrectNumberOfFields
 	}

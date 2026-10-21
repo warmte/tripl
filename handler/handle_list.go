@@ -138,6 +138,17 @@ func (h CommonHandler[T]) renderTrips(items []Trip, cfg lang.TripObjectCfg) stri
 	return text.String()
 }
 
+func tripListAction(label Label) CallbackAction {
+	switch label {
+	case BookingLabel:
+		return TripBookings
+	case EventLabel:
+		return TripEvents
+	default:
+		return TripTickets
+	}
+}
+
 func (h CommonHandler[T]) HandleListForTrip(
 	ctx context.Context,
 	callback *tgbotapi.CallbackQuery,
@@ -157,7 +168,7 @@ func (h CommonHandler[T]) HandleListForTrip(
 	}
 	objectCfg := TripObjectCfgByLabel(cfg, h.label)
 	text := h.RenderObjects(page.Items, objectCfg)
-	keyboard := makeTripListKeyboard(TicketLabel, TripTickets, tripID, int64(pageN), page.HasNext, cfg)
+	keyboard := makeTripListKeyboard(h.label, tripListAction(h.label), tripID, int64(pageN), page.HasNext, cfg)
 
 	var edit tgbotapi.EditMessageTextConfig
 

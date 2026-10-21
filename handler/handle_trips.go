@@ -3,10 +3,14 @@ package handler
 import (
 	"context"
 	"fmt"
+	"maps"
+	"slices"
+	"strconv"
 	"strings"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	. "github.com/warmte/tripl/common"
+	"github.com/warmte/tripl/document"
 	"github.com/warmte/tripl/lang"
 )
 
@@ -15,6 +19,13 @@ func (h CommonHandler[T]) GetPageByTripID(ctx context.Context, tripID int64, use
 		return Page[T]{}, ErrInternalError
 	}
 	return h.service.GetPageByTripID(ctx, tripID, userID, page)
+}
+
+func (h CommonHandler[T]) GetAllByTripID(ctx context.Context, tripID int64, userID int64) ([]T, error) {
+	if h.label == TripLabel {
+		return []T{}, ErrInternalError
+	}
+	return h.service.GetAllByTripID(ctx, tripID, userID)
 }
 
 func (h CommonHandler[T]) GetCostsByTripID(ctx context.Context, tripID int64, userID int64) (map[string]float64, error) {
@@ -35,13 +46,14 @@ func costsToString(costs map[string]float64) string {
 	parts := make([]string, 0, len(costs))
 
 	for currency, amount := range costs {
-		parts = append(parts, fmt.Sprintf("%g %s", amount, currency))
+		parts = append(parts, fmt.Sprintf("%g %s", strconv.FormatFloat(amount, 'f', -1, 64), currency))
 	}
 
 	return strings.Join(parts, ", ")
 }
 
 func spentFor(costs map[string]float64, cfg *lang.Cfg, objectCfg *lang.TripObjectCfg) string {
+	slices.Sorted(maps.Keys(costs))
 	return fmt.Sprintf("%s: %s\n", fmt.Sprintf(cfg.SpentFor, strings.ToLower(objectCfg.Many)), costsToString(costs))
 }
 
@@ -112,4 +124,58 @@ func (h CallbackHandler) HandleTripStats(
 	)
 
 	return &r, nil
+}
+
+func (h CallbackHandler) HandleTable(
+	ctx context.Context,
+	callback *tgbotapi.CallbackQuery,
+	tripID int64,
+	action CallbackAction,
+	cfg *lang.Cfg,
+) (tgbotapi.Chattable, error) {
+	if callback == nil || callback.Message == nil {
+		return nil, fmt.Errorf("callback message is nil")
+	}
+
+	userID := callback.From.ID
+
+	tickets, err := h.ticketHandler.GetAllByTripID(ctx, tripID, userID)
+	if err != nil {
+		return nil, fmt.Errorf("get trip tickets: %w", err)
+	}
+
+	bookings, err := h.bookingHandler.GetAllByTripID(ctx, tripID, userID)
+	if err != nil {
+		return nil, fmt.Errorf("get trip bookings: %w", err)
+	}
+
+	events, err := h.eventHandler.GetAllByTripID(ctx, tripID, userID)
+	if err != nil {
+		return nil, fmt.Errorf("get trip events: %w", err)
+	}
+
+	switch action {
+	case TripCSV:
+		content, err := document.CSVContent(tickets, bookings, events, cfg)
+		if err != nil {
+			return nil, fmt.Errorf("generate trip CSV: %w", err)
+		}
+		return tgbotapi.NewDocument(callback.Message.Chat.ID, tgbotapi.FileBytes{
+			Name:  fmt.Sprintf("trip-%d.csv", tripID),
+			Bytes: content,
+		}), nil
+
+	case TripXLSX:
+		content, err := document.XLSXContent(tickets, bookings, events, cfg)
+		if err != nil {
+			return nil, fmt.Errorf("generate trip XLSX: %w", err)
+		}
+		return tgbotapi.NewDocument(callback.Message.Chat.ID, tgbotapi.FileBytes{
+			Name:  fmt.Sprintf("trip-%d.xlsx", tripID),
+			Bytes: content,
+		}), nil
+	default:
+		return nil, fmt.Errorf("unknown table callback: %w", err)
+	}
+
 }

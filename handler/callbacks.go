@@ -24,6 +24,8 @@ const (
 	DetachSingle          CallbackAction = "detach"
 	GetSingle             CallbackAction = "get"
 	TripStats             CallbackAction = "trip_stats"
+	TripCSV               CallbackAction = "trip_csv"
+	TripXLSX              CallbackAction = "trip_xlsx"
 	TripTickets           CallbackAction = "trips_tickets"
 	TripBookings          CallbackAction = "trips_bookings"
 	TripEvents            CallbackAction = "trips_events"
@@ -78,7 +80,7 @@ func parseCallback(data string) (Callback, error) {
 
 	action := CallbackAction(parts[1])
 	switch action {
-	case ActualList, ArchiveList, EditSingle, DeleteSingle, GetSingle, DeleteSingleConfirmed, DetachSingle, TripStats, TomorrowList, MakeIcs:
+	case ActualList, ArchiveList, EditSingle, DeleteSingle, GetSingle, DeleteSingleConfirmed, DetachSingle, TripStats, TomorrowList, MakeIcs, TripCSV, TripXLSX:
 	default:
 		return Callback{}, fmt.Errorf(
 			"unknown action: %q",

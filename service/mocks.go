@@ -68,6 +68,11 @@ func (m *MockService[T]) GetPageByTripID(ctx context.Context, tripID, userID int
 	return args.Get(0).(Page[T]), args.Error(1)
 }
 
+func (m *MockService[T]) GetAllByTripID(ctx context.Context, tripID, userID int64) ([]T, error) {
+	args := m.Called(ctx, tripID, userID)
+	return args.Get(0).([]T), args.Error(1)
+}
+
 func (m *MockService[T]) CountByTripID(ctx context.Context, tripID, userID int64) (int64, error) {
 	args := m.Called(ctx, tripID, userID)
 	return args.Get(0).(int64), args.Error(1)

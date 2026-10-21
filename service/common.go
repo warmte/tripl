@@ -20,6 +20,7 @@ type Service[T TripObjectView] interface {
 	AttachToTrip(ctx context.Context, objID int64, tripID int64, userID int64) error
 	DetachFromTrip(ctx context.Context, objID int64, userID int64) error
 	GetPageByTripID(ctx context.Context, tripID int64, userID int64, page int) (Page[T], error)
+	GetAllByTripID(ctx context.Context, tripID int64, userID int64) ([]T, error)
 	CountByTripID(ctx context.Context, tripID int64, userID int64) (int64, error)
 	GetCostsByTripID(ctx context.Context, tripID int64, userID int64) (map[string]float64, error)
 	GetPageForTime(ctx context.Context, userID int64, start time.Time, end time.Time, page int) (Page[T], error)
@@ -97,13 +98,27 @@ func (s CommonService[T]) GetPageByTripID(
 	userID int64,
 	page int,
 ) (Page[T], error) {
-	tickets, err := s.repo.GetPageByTripID(ctx, tripID, userID, page)
+	objects, err := s.repo.GetPageByTripID(ctx, tripID, userID, page)
 	if err != nil {
 		return Page[T]{},
 			fmt.Errorf("get page by trip id: %w", err)
 	}
 
-	return PreparePage(tickets, PageSize), nil
+	return PreparePage(objects, PageSize), nil
+}
+
+func (s CommonService[T]) GetAllByTripID(
+	ctx context.Context,
+	tripID int64,
+	userID int64,
+) ([]T, error) {
+	objects, err := s.repo.GetAllByTripID(ctx, tripID, userID)
+	if err != nil {
+		return []T{},
+			fmt.Errorf("get page by trip id: %w", err)
+	}
+
+	return objects, nil
 }
 
 func (s CommonService[T]) GetByID(

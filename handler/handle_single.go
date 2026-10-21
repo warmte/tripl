@@ -288,6 +288,8 @@ func makeSingleKeyboard(label Label, objectID int64, tripID *int64, cfg *lang.Cf
 		}
 	} else {
 		statsButton := button(cfg.Buttons.Stats, MakeCallback(label, TripStats, objectID))
+		csvButton := button("→ .csv", MakeCallback(label, TripCSV, objectID))
+		xlsxButton := button("→ .xlsx", MakeCallback(label, TripXLSX, objectID))
 		ticketsButton := button(cfg.TripObjects.Ticket.Many, MakeExtendedCallback(label, TripTickets, objectID, 0))
 		bookingsButton := button(cfg.TripObjects.Booking.Many, MakeExtendedCallback(label, TripBookings, objectID, 0))
 		eventsButton := button(cfg.TripObjects.Event.Many, MakeExtendedCallback(label, TripEvents, objectID, 0))
@@ -295,6 +297,7 @@ func makeSingleKeyboard(label Label, objectID int64, tripID *int64, cfg *lang.Cf
 			InlineKeyboard: [][]tgbotapi.InlineKeyboardButton{
 				{statsButton, editButton, deleteButton},
 				{ticketsButton, bookingsButton, eventsButton},
+				{csvButton, xlsxButton},
 			},
 		}
 	}

@@ -2,6 +2,7 @@
   "welcome": "Hi! I'm a simple trip planner.",
   "choose_lang": "Выберите язык:\nChoose your language:",
   "menu": "Choose an action.",
+  "unknown_cmd": "Unknown command.",
   "add": "What would you like to add?",
   "added": "Added.",
   "add_as_file": "You can also upload a PDF file, and the bot will extract the information automatically. You have %d attempts remaining today.",
@@ -156,7 +157,7 @@
     "too_large_file": "The file is too large. Files must be no larger than 10 MB and contain no more than 10 pages. If necessary, trim the file to keep only the pages containing the required information.",
     "empty_file": "The uploaded file is empty.",
     "document_failed": "Failed to process the document.",
-    "daily_upload_limit_reached": "You have reached the daily upload limit. The limit resets at 00:00 Moscow time (UTC+03:00)."
+    "daily_upload_limit_reached": "You have reached the daily upload limit. The limit resets at 03:00 Moscow time (UTC+03:00)."
   },
   "ics": {
     "choose_zone": "Choose a time zone:",

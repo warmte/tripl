@@ -92,6 +92,7 @@ type Cfg struct {
 	Welcome           string         `json:"welcome"`
 	ChooseLang        string         `json:"choose_lang"`
 	Menu              string         `json:"menu"`
+	UnknownCmd        string         `json:"unknown_cmd"`
 	Add               string         `json:"add"`
 	Added             string         `json:"added"`
 	AddAsFile         string         `json:"add_as_file"`

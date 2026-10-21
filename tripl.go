@@ -6,6 +6,8 @@ import (
 	"io"
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/warmte/tripl/ai"
@@ -32,7 +34,6 @@ func (w redactWriter) Write(p []byte) (int, error) {
 
 func main() {
 	token := os.Getenv("TELEGRAM_BOT_TOKEN")
-	ctx := context.Background()
 
 	if token == "" {
 		log.Fatal("TELEGRAM_BOT_TOKEN is empty")
@@ -40,6 +41,16 @@ func main() {
 	w := redactWriter{out: os.Stderr, secret: []byte(token)}
 	log.SetOutput(w)
 	tgbotapi.SetLogger(log.New(w, "", log.LstdFlags))
+
+	signalCtx, stop := signal.NotifyContext(
+		context.Background(),
+		os.Interrupt,
+		syscall.SIGTERM,
+	)
+	defer stop()
+
+	ctx, cancelWork := context.WithCancel(context.Background())
+	defer cancelWork()
 
 	pool, err := db.New(ctx, os.Getenv("DATABASE_URL"))
 	if err != nil {
@@ -69,7 +80,7 @@ func main() {
 
 	api, err := tgbotapi.NewBotAPI(token)
 	if err != nil {
-		log.Panic("err create api: %w", err)
+		log.Fatalf("create bot api: %v", err)
 	}
 
 	aiService := ai.NewAIService(
@@ -86,11 +97,22 @@ func main() {
 	notificationSender := scheduler.NewNotificationSender(api, userService, ticketsHandler, bookingsHandler, eventsHandler)
 	notificationScheduler, err := scheduler.NewScheduler(*notificationSender)
 	if err != nil {
-		log.Panic("err create scheduler: %w", err)
+		log.Fatalf("create bot api: %v", err)
 	}
 
-	go notificationScheduler.Run(ctx)
-	go documentHandler.RunHandleResult(ctx)
-	go userService.RunDailyUsageCleanup(ctx)
-	b.Run()
+	resultDone := make(chan struct{})
+
+	go func() {
+		defer close(resultDone)
+		documentHandler.RunHandleResult(ctx)
+	}()
+
+	go notificationScheduler.Run(signalCtx)
+	go userService.RunDailyUsageCleanup(signalCtx)
+
+	b.Run(signalCtx)
+
+	documentHandler.Shutdown()
+	<-resultDone
+	cancelWork()
 }

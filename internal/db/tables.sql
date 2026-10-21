@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS events (
 
     end_time TIMESTAMP,
     cost VARCHAR(256),
-    currency VARCHAR(256),
+    currency VARCHAR(16),
     comment VARCHAR(256),
 
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),

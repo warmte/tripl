@@ -625,6 +625,73 @@ func (r TicketRepository) GetPageByTripID(
 	return result, nil
 }
 
+func (r TicketRepository) GetAllByTripID(
+	ctx context.Context,
+	tripID int64,
+	userID int64,
+) ([]Ticket, error) {
+	rows, err := r.db.Query(ctx, `
+		SELECT
+			id,
+			user_id,
+			trip_id,
+			vehicle,
+			departure_point,
+			arrival_point,
+			departure_time,
+			arrival_time,
+			cost,
+			currency,
+			departure_address,
+			arrival_address,
+			seat,
+			number,
+			comment
+		FROM tickets
+		WHERE user_id = $1
+		  AND trip_id = $2
+		ORDER BY departure_time ASC, id ASC
+	`, userID, tripID)
+	if err != nil {
+		return nil, fmt.Errorf("get tickets page by trip id: %w", err)
+	}
+	defer rows.Close()
+
+	var result []Ticket
+
+	for rows.Next() {
+		var ticket Ticket
+
+		if err := rows.Scan(
+			&ticket.ID,
+			&ticket.UserID,
+			&ticket.TripID,
+			&ticket.Vehicle,
+			&ticket.DeparturePoint,
+			&ticket.ArrivalPoint,
+			&ticket.DepartureTime,
+			&ticket.ArrivalTime,
+			&ticket.Cost,
+			&ticket.Currency,
+			&ticket.DepartureAddress,
+			&ticket.ArrivalAddress,
+			&ticket.Seat,
+			&ticket.Number,
+			&ticket.Comment,
+		); err != nil {
+			return nil, fmt.Errorf("scan ticket: %w", err)
+		}
+
+		result = append(result, ticket)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate tickets: %w", err)
+	}
+
+	return result, nil
+}
+
 func (r TicketRepository) GetForTime(
 	ctx context.Context,
 	userID int64,

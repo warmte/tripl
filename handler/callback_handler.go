@@ -114,6 +114,9 @@ func (h *CallbackHandler) Handle(
 	case TripStats:
 		r, err := h.HandleTripStats(ctx, callback, parsedCallback.V1, cfg)
 		return []tgbotapi.Chattable{r}, err
+	case TripCSV, TripXLSX:
+		r, err := h.HandleTable(ctx, callback, parsedCallback.V1, parsedCallback.Action, cfg)
+		return []tgbotapi.Chattable{r}, err
 	default:
 		switch parsedCallback.Label {
 		case TicketLabel:
@@ -140,7 +143,7 @@ func (h *CallbackHandler) Handle(
 
 		case TripLabel:
 			switch parsedCallback.Action {
-			case AttachSingleActual, AttachSingleArchived, DetachSingle:
+			case AttachSingleActual, AttachSingleArchived, DetachSingle, ICSChooseRegion, ICSChooseStart, ICSChooseEnd, ICSChooseEndRegion:
 				return nil, unsupportedCallbackError
 			default:
 				return h.tripHandler.SelectAction(parsedCallback, ctx, callback, cfg)

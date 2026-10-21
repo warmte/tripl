@@ -426,7 +426,13 @@ func checkedCostCurrency(cost *string, currency *string) (*string, *string) {
 	if (cost != nil && (*(cost) == "0" || *(cost) == "null" || *(cost) == "")) || cost == nil {
 		return nil, nil
 	}
-	return cost, rmNull(currency)
+	nCost := NormalizeCost(*cost)
+	nCurrency := rmNull(currency)
+	if nCurrency != nil {
+		r := NormalizeCurrency(*nCurrency)
+		nCurrency = &r
+	}
+	return &nCost, nCurrency
 }
 
 const englishPrompt = "Use English for all textual values: airplane, train, bus, carriage, seat, etc."
@@ -456,7 +462,7 @@ Each ticket must contain:
 Rules:
 - Use JSON null (without quotes) for missing values, never the string "null".
 - vehicle = transport type + flight/train/bus number, e.g. "Airplane F0101", "Train 560A", "Bus 43". Translate to language specified before.
-- departure_point/arrival_point = city. For airports, append the 3-letter IATA code only if explicitly shown in the document, e.g. "Ufa, UFA". Never guess codes or use airport names as cities.
+- departure_point/arrival_point = city name only. For airports, append the 3-letter IATA code only if explicitly shown in the document, e.g. "Ufa, UFA". Never guess codes or use airport names as cities.
 - *_address = airport/station and any shown terminal, platform or gate, e.g. "Ufa Airport, terminal 1".
 - seat = actual passenger seat only. For trains use "carriage X, seat Y". Never use terminal, gate, luggage or other numbers as a seat.
 - Dates: DD.MM.YYYY. Times: HH:MM. Match them to the correct segment; never invent them.

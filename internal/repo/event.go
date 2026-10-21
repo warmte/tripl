@@ -499,6 +499,59 @@ func (r EventRepository) GetPageByTripID(ctx context.Context, tripID int64, user
 	return result, nil
 }
 
+func (r EventRepository) GetAllByTripID(ctx context.Context, tripID int64, userID int64) ([]Event, error) {
+	rows, err := r.db.Query(ctx, `
+		SELECT
+			id,
+			user_id,
+			trip_id,
+			name,
+			location,
+			start_time,
+			end_time,
+			cost,
+			currency,
+			comment
+		FROM events
+		WHERE user_id = $1
+		  AND trip_id = $2
+		ORDER BY start_time ASC, id ASC
+	`, userID, tripID)
+	if err != nil {
+		return nil, fmt.Errorf("get events page by trip id: %w", err)
+	}
+	defer rows.Close()
+
+	var result []Event
+
+	for rows.Next() {
+		var event Event
+
+		if err := rows.Scan(
+			&event.ID,
+			&event.UserID,
+			&event.TripID,
+			&event.Name,
+			&event.Location,
+			&event.StartTime,
+			&event.EndTime,
+			&event.Cost,
+			&event.Currency,
+			&event.Comment,
+		); err != nil {
+			return nil, fmt.Errorf("scan event: %w", err)
+		}
+
+		result = append(result, event)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate events: %w", err)
+	}
+
+	return result, nil
+}
+
 func (r EventRepository) GetForTime(
 	ctx context.Context,
 	userID int64,

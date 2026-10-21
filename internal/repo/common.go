@@ -30,6 +30,7 @@ type Repository[T any] interface {
 	AttachToTrip(ctx context.Context, objID int64, tripID int64, userID int64) error
 	DetachFromTrip(ctx context.Context, objID int64, userID int64) error
 	GetPageByTripID(ctx context.Context, tripID int64, userID int64, page int) ([]T, error)
+	GetAllByTripID(ctx context.Context, tripID int64, userID int64) ([]T, error)
 	CountByTripID(ctx context.Context, tripID int64, userID int64) (int64, error)
 	GetCostsByTripID(ctx context.Context, tripID int64, userID int64) (map[string]float64, error)
 	GetForTime(ctx context.Context, userID int64, start time.Time, end time.Time, page int) ([]T, error)

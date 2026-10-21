@@ -23,38 +23,9 @@ func NewUserRepository(db *pgxpool.Pool) *UserRepository {
 	return &UserRepository{db}
 }
 
-func (r *UserRepository) Get(
-	ctx context.Context,
-	userID int64,
-) (*User, error) {
-	var user User
-
-	err := r.db.QueryRow(
-		ctx,
-		`SELECT id, language, created_at
-		 FROM users
-		 WHERE id = $1`,
-		userID,
-	).Scan(
-		&user.ID,
-		&user.Language,
-		&user.CreatedAt,
-	)
-
-	if errors.Is(err, pgx.ErrNoRows) {
-		return nil, ErrUserNotFound
-	}
-
-	if err != nil {
-		return nil, fmt.Errorf("get user by telegram id: %w", err)
-	}
-
-	return &user, nil
-}
-
 func (r *UserRepository) GetOrCreate(
 	ctx context.Context,
-	telegramID int64,
+	userID int64,
 	language string,
 ) (*User, error) {
 	var user User
@@ -64,9 +35,9 @@ func (r *UserRepository) GetOrCreate(
 		`INSERT INTO users (id, language)
 		 VALUES ($1, $2)
 		 ON CONFLICT (id)
-		 DO UPDATE SET id = EXCLUDED.telegram_id
+		 DO UPDATE SET id = users.telegram_id
 		 RETURNING id, language, created_at`,
-		telegramID,
+		userID,
 		language,
 	).Scan(
 		&user.ID,
@@ -93,7 +64,7 @@ func (r *UserRepository) UpdateLangOrCreate(
 		`INSERT INTO users (id, language)
 		 VALUES ($1, $2)
 		 ON CONFLICT (id)
-		 DO UPDATE SET language = EXCLUDED.language
+		 DO UPDATE SET language = users.language
 		 RETURNING id, language, created_at`,
 		telegramID,
 		language,
@@ -149,17 +120,7 @@ func (r UserRepository) GetAll(ctx context.Context) ([]User, error) {
 }
 
 func (r UserRepository) GetLanguage(ctx context.Context, userID int64) (string, error) {
-	var language string
-
-	err := r.db.QueryRow(
-		ctx,
-		`
-		SELECT language
-		FROM users
-		WHERE id = $1
-		`,
-		userID,
-	).Scan(&language)
+	user, err := r.GetOrCreate(ctx, userID, string(lang.LanguageRu))
 
 	if errors.Is(err, pgx.ErrNoRows) {
 		return "", ErrUserNotFound
@@ -169,7 +130,7 @@ func (r UserRepository) GetLanguage(ctx context.Context, userID int64) (string, 
 		return "", fmt.Errorf("get user language: %w", err)
 	}
 
-	return language, nil
+	return user.Language, nil
 }
 
 func (r UserRepository) TryConsume(
