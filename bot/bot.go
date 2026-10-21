@@ -275,6 +275,11 @@ func processTripObjects(cfg *lang.Cfg, f func(to TripObject) bool) bool {
 	return result
 }
 
+func isEditReply(text string, cfg *lang.Cfg) bool {
+	_, err := handler.ParseEditContext(text, cfg)
+	return err == nil
+}
+
 func (bot Bot) handleUpdate(update tgbotapi.Update) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -314,8 +319,8 @@ func (bot Bot) handleUpdate(update tgbotapi.Update) {
 			msg := update.Message
 			log.Printf("[%s] %s", msg.From.UserName, msg.Text)
 			langCfg := bot.userService.GetLanguageCfg(bot.ctx, msg.Chat.ID)
-			_, err := handler.ParseEditContext(msg.ReplyToMessage.Text, langCfg)
-			if msg.ReplyToMessage != nil && msg.ReplyToMessage.From != nil && msg.ReplyToMessage.From.ID == bot.api.Self.ID && err == nil {
+
+			if msg.ReplyToMessage != nil && msg.ReplyToMessage.From != nil && msg.ReplyToMessage.From.ID == bot.api.Self.ID && isEditReply(msg.ReplyToMessage.Text, langCfg) {
 				{
 					message, err := bot.handlers.HandleEditReply(bot.ctx, update.Message, langCfg)
 					if err != nil {
