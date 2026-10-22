@@ -6,6 +6,7 @@ import (
 	"time"
 
 	. "github.com/warmte/tripl/common"
+	"github.com/warmte/tripl/lang"
 )
 
 func parseDatetime(input string, layout string, name string) (*time.Time, error) {
@@ -28,7 +29,8 @@ func opt(input string) *string {
 	if input == "-" {
 		return nil
 	} else {
-		return &input
+		r := lang.Clean(input)
+		return &r
 	}
 }
 
@@ -71,9 +73,9 @@ func parseTicketMainFields(input string, userID int64) (Ticket, error) {
 
 	return Ticket{
 		UserID:         userID,
-		Vehicle:        &lines[0],
-		DeparturePoint: &lines[1],
-		ArrivalPoint:   &lines[2],
+		Vehicle:        opt(lines[0]),
+		DeparturePoint: opt(lines[1]),
+		ArrivalPoint:   opt(lines[2]),
 		DepartureTime:  departureTime,
 		ArrivalTime:    arrivalTime,
 	}, nil
@@ -125,8 +127,8 @@ func parseBookingMainFields(input string, userID int64) (Booking, error) {
 
 	return Booking{
 		UserID:       userID,
-		City:         &lines[0],
-		Place:        &lines[1],
+		City:         opt(lines[0]),
+		Place:        opt(lines[1]),
 		CheckInDate:  checkInDate,
 		CheckOutDate: checkOutDate,
 	}, nil
@@ -182,8 +184,8 @@ func parseEventMainFields(input string, userID int64) (Event, error) {
 
 	return Event{
 		UserID:    userID,
-		Name:      &lines[0],
-		Location:  &lines[1],
+		Name:      opt(lines[0]),
+		Location:  opt(lines[1]),
 		StartTime: startTime,
 	}, nil
 }
@@ -232,9 +234,18 @@ func parseTripMainFields(input string, userID int64) (Trip, error) {
 		return Trip{}, ErrIncorrectDate
 	}
 
+	nameOpt := opt(lines[0])
+	var name string
+
+	if nameOpt == nil || *nameOpt == "" {
+		name = "🗊"
+	} else {
+		name = *nameOpt
+	}
+
 	return Trip{
 		UserID:    userID,
-		Name:      lines[0],
+		Name:      name,
 		StartDate: *startDate,
 		EndDate:   *endDate,
 	}, nil

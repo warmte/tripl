@@ -269,7 +269,7 @@ func (h CommonHandler[T]) buildListForDate(
 		return "", nil, err
 	}
 	singleKeyboard := makeSingleKeyboard(h.label, item.GetID(), item.GetTripID(), cfg)
-	listKeyboard := makeListKeyboard(h.label, ForDate(time.Now()), int64(page), result.HasNext)
+	listKeyboard := makeListKeyboard(h.label, ForDate(date), int64(page), result.HasNext)
 	var rows [][]tgbotapi.InlineKeyboardButton
 	if singleKeyboard != nil {
 		rows = append(rows, singleKeyboard.InlineKeyboard...)

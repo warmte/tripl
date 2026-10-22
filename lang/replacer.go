@@ -26,3 +26,7 @@ func EscapeMarkdownV2(s string) string {
 
 	return replacer.Replace(s)
 }
+
+func Clean(s string) string {
+	return strings.TrimSpace(strings.Replace(s, "`", "", -1))
+}

@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	hour   = 18
-	minute = 40
+	hour   = 9
+	minute = 00
 )
 
 type Scheduler struct {

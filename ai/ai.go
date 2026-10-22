@@ -395,23 +395,7 @@ func parseOptionalDateTime(date *string, value *string) *time.Time {
 
 func cleanJSONResponse(value string) string {
 	value = strings.TrimSpace(value)
-
-	if strings.HasPrefix(value, "```json") {
-		value = strings.TrimPrefix(value, "```json")
-		value = strings.TrimSpace(value)
-	}
-
-	if strings.HasPrefix(value, "```") {
-		value = strings.TrimPrefix(value, "```")
-		value = strings.TrimSpace(value)
-	}
-
-	if strings.HasSuffix(value, "```") {
-		value = strings.TrimSuffix(value, "```")
-		value = strings.TrimSpace(value)
-	}
-
-	return value
+	return lang.Clean(value)
 }
 
 func checkedCostCurrency(cost *string, currency *string) (*string, *string) {

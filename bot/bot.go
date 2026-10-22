@@ -61,13 +61,13 @@ func (bot Bot) matchByCmd(msg *tgbotapi.Message, matchCmdPrefix string) bool {
 	return msg.IsCommand() && strings.HasPrefix(msg.Command(), matchCmdPrefix)
 
 }
-func (bot Bot) parseByCmd(msg *tgbotapi.Message, matchCmdPrefix string) int {
+func (bot Bot) parseByCmd(msg *tgbotapi.Message, matchCmdPrefix string) (int, error) {
 	suffix := strings.TrimPrefix(msg.Command(), matchCmdPrefix)
 	n, err := strconv.Atoi(suffix)
 	if err != nil || n <= 0 {
-		return -1
+		return 0, fmt.Errorf("Incorrect object number: %s", msg.Command())
 	}
-	return n
+	return n, nil
 }
 
 func (bot Bot) matchListObjects(
@@ -115,45 +115,38 @@ func (bot Bot) matchListObjects(
 }
 
 func (bot Bot) matchShowSingle(msg *tgbotapi.Message, cfg *lang.Cfg) bool {
-	var newMsg tgbotapi.Chattable
-	var err error
-	if bot.matchByCmd(msg, "tt") {
-		id := bot.parseByCmd(msg, "tt")
-		if id != -1 {
-			newMsg, err = bot.handlers.TicketHandler.ShowSingle(bot.ctx, msg.Chat.ID, int64(id), cfg)
-		} else {
-			bot.replyForError(msg.Chat.ID, ErrInternalError, cfg)
+	if bot.matchByCmd(msg, TicketCmd) || bot.matchByCmd(msg, BookingCmd) || bot.matchByCmd(msg, EventCmd) || bot.matchByCmd(msg, TripCmd) {
+		var newMsg tgbotapi.Chattable
+		var err error
+		var id int
+		if bot.matchByCmd(msg, TicketCmd) {
+			id, err = bot.parseByCmd(msg, TicketCmd)
+			if err == nil {
+				newMsg, err = bot.handlers.TicketHandler.ShowSingle(bot.ctx, msg.Chat.ID, int64(id), cfg)
+			}
+		} else if bot.matchByCmd(msg, BookingCmd) {
+			id, err = bot.parseByCmd(msg, BookingCmd)
+			if err == nil {
+				newMsg, err = bot.handlers.BookingHandler.ShowSingle(bot.ctx, msg.Chat.ID, int64(id), cfg)
+			}
+		} else if bot.matchByCmd(msg, EventCmd) {
+			id, err = bot.parseByCmd(msg, EventCmd)
+			if err == nil {
+				newMsg, err = bot.handlers.EventHandler.ShowSingle(bot.ctx, msg.Chat.ID, int64(id), cfg)
+			}
+		} else if bot.matchByCmd(msg, TripCmd) {
+			id, err = bot.parseByCmd(msg, TripCmd)
+			if err == nil {
+				newMsg, err = bot.handlers.TripHandler.ShowSingle(bot.ctx, msg.Chat.ID, int64(id), cfg)
+			}
 		}
-	} else if bot.matchByCmd(msg, "bk") {
-		id := bot.parseByCmd(msg, "bk")
-		if id != -1 {
-			newMsg, err = bot.handlers.BookingHandler.ShowSingle(bot.ctx, msg.Chat.ID, int64(id), cfg)
-		} else {
-			bot.replyForError(msg.Chat.ID, ErrInternalError, cfg)
-		}
-	} else if bot.matchByCmd(msg, "ev") {
-		id := bot.parseByCmd(msg, "ev")
-		if id != -1 {
-			newMsg, err = bot.handlers.EventHandler.ShowSingle(bot.ctx, msg.Chat.ID, int64(id), cfg)
-		} else {
-			bot.replyForError(msg.Chat.ID, ErrInternalError, cfg)
-		}
-	} else if bot.matchByCmd(msg, "tr") {
-		id := bot.parseByCmd(msg, "tr")
-		if id != -1 {
-			newMsg, err = bot.handlers.TripHandler.ShowSingle(bot.ctx, msg.Chat.ID, int64(id), cfg)
-		} else {
-			bot.replyForError(msg.Chat.ID, ErrInternalError, cfg)
-		}
-	}
-	if err == nil {
-		_, err := bot.api.Send(newMsg)
 		if err == nil {
-			return true
+			_, err = bot.api.Send(newMsg)
 		}
-		bot.replyForError(msg.Chat.ID, err, cfg)
-	} else {
-		bot.replyForError(msg.Chat.ID, err, cfg)
+		if err != nil {
+			bot.replyForError(msg.Chat.ID, err, cfg)
+		}
+		return true
 	}
 	return false
 }

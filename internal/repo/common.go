@@ -23,8 +23,6 @@ type Repository[T any] interface {
 	Delete(ctx context.Context, id int64, userID int64) error
 	GetByID(ctx context.Context, id int64, userID int64) (*T, error)
 	UpdateField(ctx context.Context, id int64, userID int64, field string, value any) error
-	GetActual(ctx context.Context, userID int64) ([]T, error)
-	GetArchive(ctx context.Context, userID int64) ([]T, error)
 	GetActualPage(ctx context.Context, userID int64, page int) ([]T, error)
 	GetArchivePage(ctx context.Context, userID int64, page int) ([]T, error)
 	AttachToTrip(ctx context.Context, objID int64, tripID int64, userID int64) error

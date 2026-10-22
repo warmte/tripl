@@ -155,7 +155,8 @@ func (h CallbackHandler) HandleTable(
 
 	switch action {
 	case TripCSV:
-		content, err := document.CSVContent(tickets, bookings, events, cfg)
+		l := h.userService.GetLanguage(ctx, userID)
+		content, err := document.CSVContent(tickets, bookings, events, cfg, l)
 		if err != nil {
 			return nil, fmt.Errorf("generate trip CSV: %w", err)
 		}

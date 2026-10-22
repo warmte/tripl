@@ -25,7 +25,7 @@ func (h TicketHandler) HandleMakeICS(
 		return nil, err
 	}
 
-	if object.DepartureTime == nil || object.ArrivalTime == nil || object.ArrivalTime.Before(*object.DepartureTime) {
+	if object.DepartureTime == nil || object.ArrivalTime == nil {
 		return nil, ErrDatetimeRestraint
 	}
 

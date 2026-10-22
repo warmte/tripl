@@ -305,7 +305,7 @@ func (h CommonHandler[T]) HandleEditReply(
 		return nil, ErrTooLongField
 	}
 
-	field, err := parseEditValue(editCtx.Label, editCtx.FieldID, value)
+	field, err := parseEditValue(editCtx.Label, editCtx.FieldID, lang.Clean(value))
 	if err != nil {
 		return nil, err
 	}

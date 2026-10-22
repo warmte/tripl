@@ -69,8 +69,7 @@ func Normalize(value *string) *string {
 	}
 }
 
-func NormalizeCost(rawStr string) string {
-	raw := cropStr(strings.TrimSpace(rawStr), 16)
+func NormalizeCost(raw string) string {
 	s := strings.Map(func(r rune) rune {
 		if unicode.IsSpace(r) {
 			return -1
@@ -90,7 +89,8 @@ func NormalizeCost(rawStr string) string {
 	return s
 }
 
-func NormalizeCurrency(raw string) string {
+func NormalizeCurrency(rawStr string) string {
+	raw := cropStr(strings.TrimSpace(rawStr), 16)
 	s := strings.ToLower(strings.TrimSpace(raw))
 	if code, ok := currencyAliases[s]; ok {
 		return code

@@ -102,11 +102,14 @@ func CSVContent(
 	bookings []common.Booking,
 	events []common.Event,
 	cfg *lang.Cfg,
+	l lang.Language,
 ) ([]byte, error) {
 	var buf bytes.Buffer
 	w := csv.NewWriter(&buf)
 
-	w.Comma = ';'
+	if l == lang.LanguageRu {
+		w.Comma = ';'
+	}
 
 	for i, s := range exportSections(tickets, bookings, events, cfg) {
 		if i > 0 {
