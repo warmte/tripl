@@ -238,25 +238,19 @@ func (s CommonHandler[T]) GetPageForTime(ctx context.Context, userID int64, star
 	return s.service.GetPageForTime(ctx, userID, start, end, page)
 }
 
-func getStartEndTime(location *time.Location) (time.Time, time.Time, error) {
-	now := time.Now().In(location)
-	start := time.Date(now.Year(), now.Month(), now.Day()+1, 0, 0, 0, 0, location)
-	end := start.AddDate(0, 0, 1)
-
-	return start, end, nil
-}
-
-func (h CommonHandler[T]) buildTomorrowList(
+func (h CommonHandler[T]) buildListForDate(
 	ctx context.Context,
 	userID int64,
 	page int,
+	date time.Time,
 	cfg *lang.Cfg,
 ) (string, *tgbotapi.InlineKeyboardMarkup, error) {
 	location, err := time.LoadLocation(LocationName)
 	if err != nil {
 		return "", nil, fmt.Errorf("load scheduler location: %w", err)
 	}
-	start, end, err := getStartEndTime(location)
+	start := time.Date(date.Year(), date.Month(), date.Day()+1, 0, 0, 0, 0, location)
+	end := start.AddDate(0, 0, 1)
 	if err != nil {
 		return "", nil, err
 	}
@@ -275,7 +269,7 @@ func (h CommonHandler[T]) buildTomorrowList(
 		return "", nil, err
 	}
 	singleKeyboard := makeSingleKeyboard(h.label, item.GetID(), item.GetTripID(), cfg)
-	listKeyboard := makeListKeyboard(h.label, TomorrowList, int64(page), result.HasNext)
+	listKeyboard := makeListKeyboard(h.label, ForDate(time.Now()), int64(page), result.HasNext)
 	var rows [][]tgbotapi.InlineKeyboardButton
 	if singleKeyboard != nil {
 		rows = append(rows, singleKeyboard.InlineKeyboard...)
@@ -292,7 +286,9 @@ func (h CommonHandler[T]) ShowTomorrowList(
 	userID int64,
 	cfg *lang.Cfg,
 ) (*tgbotapi.MessageConfig, error) {
-	text, keyboard, err := h.buildTomorrowList(ctx, userID, 0, cfg)
+	location, err := time.LoadLocation(LocationName)
+	now := time.Now().In(location)
+	text, keyboard, err := h.buildListForDate(ctx, userID, 0, now, cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -304,17 +300,18 @@ func (h CommonHandler[T]) ShowTomorrowList(
 	return &message, nil
 }
 
-func (h CommonHandler[T]) HandleTomorrowList(
+func (h CommonHandler[T]) HandleListForDate(
 	ctx context.Context,
 	callback *tgbotapi.CallbackQuery,
 	page int,
+	date time.Time,
 	cfg *lang.Cfg,
 ) (*tgbotapi.EditMessageTextConfig, error) {
 	if callback.Message == nil {
 		return nil, fmt.Errorf("callback message is nil")
 	}
 
-	text, keyboard, err := h.buildTomorrowList(ctx, callback.From.ID, page, cfg)
+	text, keyboard, err := h.buildListForDate(ctx, callback.From.ID, page, date, cfg)
 	if err != nil {
 		return nil, err
 	}

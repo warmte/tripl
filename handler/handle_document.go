@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"runtime/debug"
 	"sync"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -140,6 +141,11 @@ func (h *DocumentHandler) worker() {
 	for {
 		h.mu.Lock()
 
+		if h.stopped {
+			h.mu.Unlock()
+			return
+		}
+
 		if len(h.queue) > 0 {
 			task := h.queue[0]
 			h.queue = h.queue[1:]
@@ -147,11 +153,6 @@ func (h *DocumentHandler) worker() {
 
 			h.process(task)
 			continue
-		}
-
-		if h.stopped {
-			h.mu.Unlock()
-			return
 		}
 
 		h.mu.Unlock()
@@ -239,6 +240,12 @@ func (h *DocumentHandler) RunHandleResult(ctx context.Context) {
 }
 
 func (h *DocumentHandler) handleResult(ctx context.Context, result DocumentResult) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("panic on document handling%v\n%s", r, debug.Stack())
+		}
+	}()
+	
 	cfg := h.userService.GetLanguageCfg(ctx, result.ChatID)
 	if result.Err != nil {
 		h.api.Send(tgbotapi.NewMessage(result.ChatID, cfg.Errors.DocumentFailed))

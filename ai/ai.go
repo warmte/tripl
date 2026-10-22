@@ -271,17 +271,17 @@ func (s *AIService) parseTickets(response string, userID int64) ([]Ticket, error
 		cost, currency := checkedCostCurrency(data.Cost, data.Currency)
 		tickets = append(tickets, Ticket{
 			UserID:           userID,
-			Vehicle:          rmNull(data.Vehicle),
-			DeparturePoint:   rmNull(data.DeparturePoint),
-			ArrivalPoint:     rmNull(data.ArrivalPoint),
+			Vehicle:          Normalize(data.Vehicle),
+			DeparturePoint:   Normalize(data.DeparturePoint),
+			ArrivalPoint:     Normalize(data.ArrivalPoint),
 			DepartureTime:    parseOptionalDateTime(data.DepartureDate, data.DepartureTime),
 			ArrivalTime:      parseOptionalDateTime(data.ArrivalDate, data.ArrivalTime),
 			Cost:             cost,
 			Currency:         currency,
-			DepartureAddress: rmNull(data.DepartureAddress),
-			ArrivalAddress:   rmNull(data.ArrivalAddress),
-			Seat:             rmNull(data.Seat),
-			Number:           rmNull(data.Number),
+			DepartureAddress: Normalize(data.DepartureAddress),
+			ArrivalAddress:   Normalize(data.ArrivalAddress),
+			Seat:             Normalize(data.Seat),
+			Number:           Normalize(data.Number),
 		})
 	}
 
@@ -307,16 +307,16 @@ func (s *AIService) parseBooking(response string, userID int64) (Booking, error)
 
 	return Booking{
 		UserID:       userID,
-		City:         rmNull(data.City),
-		Place:        rmNull(data.Place),
+		City:         Normalize(data.City),
+		Place:        Normalize(data.Place),
 		CheckInDate:  checkInDate,
 		CheckOutDate: checkOutDate,
 		Cost:         cost,
 		Currency:     currency,
-		Address:      rmNull(data.Address),
+		Address:      Normalize(data.Address),
 		CheckInTime:  checkInTime,
 		CheckOutTime: checkOutTime,
-		Number:       rmNull(data.Number),
+		Number:       Normalize(data.Number),
 	}, nil
 }
 
@@ -341,8 +341,8 @@ func (s *AIService) parseEvent(response string, userID int64) (Event, error) {
 
 	return Event{
 		UserID:    userID,
-		Name:      rmNull(data.Name),
-		Location:  rmNull(data.Location),
+		Name:      Normalize(data.Name),
+		Location:  Normalize(data.Location),
 		StartTime: startTime,
 		EndTime:   endTime,
 		Cost:      cost,
@@ -414,20 +414,12 @@ func cleanJSONResponse(value string) string {
 	return value
 }
 
-func rmNull(value *string) *string {
-	if value != nil && (*value == "null" || *value == "") {
-		return nil
-	} else {
-		return value
-	}
-}
-
 func checkedCostCurrency(cost *string, currency *string) (*string, *string) {
 	if (cost != nil && (*(cost) == "0" || *(cost) == "null" || *(cost) == "")) || cost == nil {
 		return nil, nil
 	}
 	nCost := NormalizeCost(*cost)
-	nCurrency := rmNull(currency)
+	nCurrency := Normalize(currency)
 	if nCurrency != nil {
 		r := NormalizeCurrency(*nCurrency)
 		nCurrency = &r

@@ -290,7 +290,7 @@ func (r TicketRepository) GetActual(
 			comment
 		FROM tickets
 		WHERE user_id = $1
-		  AND arrival_time >= NOW()
+		  AND (arrival_time >= NOW() OR arrival_time IS NULL)
 		ORDER BY arrival_time ASC`,
 		userID,
 	)

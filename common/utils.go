@@ -1,8 +1,10 @@
 package common
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
+	"time"
 	"unicode"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -48,7 +50,27 @@ func BuildMsgWithKeyboard(chatId int64, text string, buttons [][]string, cfg *la
 	return msg
 }
 
-func NormalizeCost(raw string) string {
+func cropStr(s string, n int) string {
+	runes := []rune(s)
+	if len(runes) <= n {
+		return s
+	}
+	return string(runes[:n])
+}
+
+func Normalize(value *string) *string {
+	if value != nil && (*value == "null" || *value == "") {
+		return nil
+	} else if value != nil {
+		r := cropStr(strings.ReplaceAll(*value, "\n", " "), 256)
+		return &r
+	} else {
+		return value
+	}
+}
+
+func NormalizeCost(rawStr string) string {
+	raw := cropStr(strings.TrimSpace(rawStr), 16)
 	s := strings.Map(func(r rune) rune {
 		if unicode.IsSpace(r) {
 			return -1
@@ -126,4 +148,24 @@ var currencyAliases = map[string]string{
 	"ron": "RON", "лей": "RON",
 	"huf": "HUF", "форинт": "HUF",
 	"bgn": "BGN", "лев": "BGN", "лева": "BGN",
+}
+
+func optStr(s *string) string {
+	if s == nil {
+		return ""
+	} else {
+		return *s
+	}
+}
+
+func optDateStr(start *time.Time, end *time.Time, layout string) string {
+	if start == nil {
+		return ""
+	}
+
+	if end == nil {
+		return ", " + start.Format(layout)
+	}
+
+	return fmt.Sprintf(", %s - %s", start.Format(layout), end.Format(layout))
 }

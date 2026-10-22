@@ -3,6 +3,8 @@ package handler
 import (
 	"context"
 	"fmt"
+	"strings"
+	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	. "github.com/warmte/tripl/common"
@@ -14,6 +16,18 @@ type CommonHandler[T TripObjectView] struct {
 	label       Label
 	service     service.Service[T]
 	tripService service.Service[Trip]
+}
+
+func extractDate(action CallbackAction) *time.Time {
+	input := string(action)
+	if !strings.HasPrefix(input, ForDatePref) {
+		return nil
+	}
+	date, err := time.Parse(DateLayout, strings.TrimPrefix(input, ForDatePref))
+	if err != nil {
+		return nil
+	}
+	return &date
 }
 
 func (h CommonHandler[T]) SelectAction(
@@ -29,9 +43,15 @@ func (h CommonHandler[T]) SelectAction(
 		parsedCallback.V1,
 	)
 
+	possibleDate := extractDate(parsedCallback.Action)
+	if possibleDate != nil {
+		r, err := h.HandleListForDate(ctx, callback, int(parsedCallback.V1), *possibleDate, cfg)
+		return []tgbotapi.Chattable{r}, err
+	}
+
 	switch parsedCallback.Action {
 	case ActualList, ArchiveList:
-		r, err := h.HandleList(ctx, callback, parsedCallback, cfg.TripObjects.Ticket)
+		r, err := h.HandleList(ctx, callback, parsedCallback, TripObjectCfgByLabel(cfg, parsedCallback.Label))
 		return []tgbotapi.Chattable{r}, err
 	case GetSingle:
 		r, err := h.HandleGetSingle(ctx, callback, parsedCallback.V1, cfg)
@@ -46,9 +66,6 @@ func (h CommonHandler[T]) SelectAction(
 		return h.HandleDeleteSingleConfirmed(ctx, callback, parsedCallback.V1, cfg)
 	case DetachSingle:
 		r, err := h.HandleDetachSingle(ctx, callback, parsedCallback.V1, cfg)
-		return []tgbotapi.Chattable{r}, err
-	case TomorrowList:
-		r, err := h.HandleTomorrowList(ctx, callback, int(parsedCallback.V1), cfg)
 		return []tgbotapi.Chattable{r}, err
 
 	default:

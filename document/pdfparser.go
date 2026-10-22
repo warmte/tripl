@@ -1,10 +1,10 @@
 package document
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -38,33 +38,12 @@ func (p *PDFParser) Parse(ctx context.Context, document *PDFDocument) (string, e
 		return "", err
 	}
 
-	parseCtx, cancel := context.WithTimeout(ctx, pdfParseTimeout)
-	defer cancel()
-
-	cmd := exec.CommandContext(
-		parseCtx,
-		"pdftotext",
-		"-l", strconv.Itoa(MaxPDFPages),
-		"-enc", "UTF-8",
-		document.Path,
-		"-",
-	)
-
-	var output bytes.Buffer
-	cmd.Stdout = &output
-
-	if err := cmd.Run(); err != nil {
-		if parseCtx.Err() != nil {
-			return "", fmt.Errorf(
-				"pdftotext timed out or was canceled: %w",
-				parseCtx.Err(),
-			)
-		}
-
-		return "", fmt.Errorf("run pdftotext: %w", err)
+	output, err := runPDFParser(ctx, document.Path)
+	if err != nil {
+		return "", err
 	}
 
-	text := strings.TrimSpace(output.String())
+	text := strings.TrimSpace(string(output))
 
 	if !utf8.ValidString(text) {
 		return "", errors.New("pdftotext returned invalid UTF-8")
@@ -82,4 +61,47 @@ func (p *PDFParser) Parse(ctx context.Context, document *PDFDocument) (string, e
 	}
 
 	return text, nil
+}
+
+func runPDFParser(ctx context.Context, path string) ([]byte, error) {
+	parseCtx, cancel := context.WithTimeout(ctx, pdfParseTimeout)
+	defer cancel()
+
+	cmd := exec.CommandContext(
+		parseCtx,
+		"pdftotext",
+		"-l", strconv.Itoa(MaxPDFPages),
+		"-enc", "UTF-8",
+		path,
+		"-",
+	)
+
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return nil, fmt.Errorf("create parser stdout: %w", err)
+	}
+
+	if err := cmd.Start(); err != nil {
+		return nil, fmt.Errorf("start PDF parser: %w", err)
+	}
+
+	output, readErr := io.ReadAll(io.LimitReader(stdout, MaxPDFSize+1))
+
+	if int64(len(output)) > MaxPDFSize {
+		_ = cmd.Process.Kill()
+		_ = cmd.Wait()
+		return nil, ErrTooLargeFile
+	}
+
+	if readErr != nil {
+		_ = cmd.Process.Kill()
+		_ = cmd.Wait()
+		return nil, fmt.Errorf("read parser output: %w", readErr)
+	}
+
+	if err := cmd.Wait(); err != nil {
+		return nil, fmt.Errorf("PDF parser failed: %w", err)
+	}
+
+	return output, nil
 }

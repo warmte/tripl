@@ -416,7 +416,7 @@ func (r BookingRepository) GetActualPage(
 			comment
 		FROM bookings
 		WHERE user_id = $1
-		  AND check_out_date >= CURRENT_DATE
+		  AND (check_out_date >= CURRENT_DATE OR check_out_date IS NULL)
 		ORDER BY check_in_date, id
 		LIMIT $2 OFFSET $3
 	`, userID, PageSize+1, offset)

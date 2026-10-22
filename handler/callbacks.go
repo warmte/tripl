@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	. "github.com/warmte/tripl/common"
 )
@@ -13,7 +14,6 @@ type CallbackAction string
 const (
 	ArchiveList           CallbackAction = "archive"
 	ActualList            CallbackAction = "actual"
-	TomorrowList          CallbackAction = "tomorrow"
 	DeleteSingle          CallbackAction = "delete"
 	DeleteSingleConfirmed CallbackAction = "delete_confirmed"
 	EditSingle            CallbackAction = "edit"
@@ -34,7 +34,13 @@ const (
 	ICSChooseStart        CallbackAction = "ics_start"
 	ICSChooseEndRegion    CallbackAction = "ics_end_region"
 	ICSChooseEnd          CallbackAction = "ics_end"
+
+	ForDatePref string = "for_date_"
 )
+
+func ForDate(date time.Time) CallbackAction {
+	return CallbackAction(fmt.Sprintf("%s%s", ForDatePref, date.Format(DateLayout)))
+}
 
 type Callback struct {
 	Label  Label
@@ -80,12 +86,14 @@ func parseCallback(data string) (Callback, error) {
 
 	action := CallbackAction(parts[1])
 	switch action {
-	case ActualList, ArchiveList, EditSingle, DeleteSingle, GetSingle, DeleteSingleConfirmed, DetachSingle, TripStats, TomorrowList, MakeIcs, TripCSV, TripXLSX:
+	case ActualList, ArchiveList, EditSingle, DeleteSingle, GetSingle, DeleteSingleConfirmed, DetachSingle, TripStats, MakeIcs, TripCSV, TripXLSX:
 	default:
-		return Callback{}, fmt.Errorf(
-			"unknown action: %q",
-			action,
-		)
+		if !strings.HasPrefix(string(action), ForDatePref) {
+			return Callback{}, fmt.Errorf(
+				"unknown action: %q",
+				action,
+			)
+		}
 	}
 
 	v1, err := strconv.ParseInt(parts[2], 10, 64)

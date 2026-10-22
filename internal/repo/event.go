@@ -336,7 +336,7 @@ func (r EventRepository) GetActualPage(
 			comment
 		FROM events
 		WHERE user_id = $1
-		  AND COALESCE(end_time, start_time) >= NOW()
+		  AND (COALESCE(end_time, start_time) >= NOW() OR COALESCE(end_time, start_time) IS NULL)
 		ORDER BY start_time, id
 		LIMIT $2 OFFSET $3
 	`, userID, PageSize+1, offset)

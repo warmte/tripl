@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	. "github.com/warmte/tripl/common"
@@ -300,7 +301,7 @@ func (h CommonHandler[T]) HandleEditReply(
 		return nil, fmt.Errorf("empty edit value")
 	}
 
-	if len(value) > 256 {
+	if utf8.RuneCountInString(value) > 256 {
 		return nil, ErrTooLongField
 	}
 

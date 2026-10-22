@@ -45,15 +45,14 @@ func (h CommonHandler[T]) CountByTripID(ctx context.Context, tripID int64, userI
 func costsToString(costs map[string]float64) string {
 	parts := make([]string, 0, len(costs))
 
-	for currency, amount := range costs {
-		parts = append(parts, fmt.Sprintf("%s %s", strconv.FormatFloat(amount, 'f', -1, 64), currency))
+	for _, currency := range slices.Sorted(maps.Keys(costs)) {
+		parts = append(parts, fmt.Sprintf("%s %s", strconv.FormatFloat(costs[currency], 'f', -1, 64), currency))
 	}
 
 	return strings.Join(parts, ", ")
 }
 
 func spentFor(costs map[string]float64, cfg *lang.Cfg, objectCfg *lang.TripObjectCfg) string {
-	slices.Sorted(maps.Keys(costs))
 	return fmt.Sprintf("%s: %s\n", fmt.Sprintf(cfg.SpentFor, strings.ToLower(objectCfg.Many)), costsToString(costs))
 }
 

@@ -115,42 +115,45 @@ func (bot Bot) matchListObjects(
 }
 
 func (bot Bot) matchShowSingle(msg *tgbotapi.Message, cfg *lang.Cfg) bool {
+	var newMsg tgbotapi.Chattable
+	var err error
 	if bot.matchByCmd(msg, "tt") {
 		id := bot.parseByCmd(msg, "tt")
 		if id != -1 {
-			newMsg, err := bot.handlers.TicketHandler.ShowSingle(bot.ctx, msg.Chat.ID, int64(id), cfg)
-			if err == nil {
-				bot.api.Send(*newMsg)
-			}
+			newMsg, err = bot.handlers.TicketHandler.ShowSingle(bot.ctx, msg.Chat.ID, int64(id), cfg)
+		} else {
+			bot.replyForError(msg.Chat.ID, ErrInternalError, cfg)
 		}
-		return true
 	} else if bot.matchByCmd(msg, "bk") {
 		id := bot.parseByCmd(msg, "bk")
 		if id != -1 {
-			newMsg, err := bot.handlers.BookingHandler.ShowSingle(bot.ctx, msg.Chat.ID, int64(id), cfg)
-			if err == nil {
-				bot.api.Send(*newMsg)
-			}
+			newMsg, err = bot.handlers.BookingHandler.ShowSingle(bot.ctx, msg.Chat.ID, int64(id), cfg)
+		} else {
+			bot.replyForError(msg.Chat.ID, ErrInternalError, cfg)
 		}
-		return true
 	} else if bot.matchByCmd(msg, "ev") {
 		id := bot.parseByCmd(msg, "ev")
 		if id != -1 {
-			newMsg, err := bot.handlers.EventHandler.ShowSingle(bot.ctx, msg.Chat.ID, int64(id), cfg)
-			if err == nil {
-				bot.api.Send(*newMsg)
-			}
+			newMsg, err = bot.handlers.EventHandler.ShowSingle(bot.ctx, msg.Chat.ID, int64(id), cfg)
+		} else {
+			bot.replyForError(msg.Chat.ID, ErrInternalError, cfg)
 		}
-		return true
 	} else if bot.matchByCmd(msg, "tr") {
 		id := bot.parseByCmd(msg, "tr")
 		if id != -1 {
-			newMsg, err := bot.handlers.TripHandler.ShowSingle(bot.ctx, msg.Chat.ID, int64(id), cfg)
-			if err == nil {
-				bot.api.Send(*newMsg)
-			}
+			newMsg, err = bot.handlers.TripHandler.ShowSingle(bot.ctx, msg.Chat.ID, int64(id), cfg)
+		} else {
+			bot.replyForError(msg.Chat.ID, ErrInternalError, cfg)
 		}
-		return true
+	}
+	if err == nil {
+		_, err := bot.api.Send(newMsg)
+		if err == nil {
+			return true
+		}
+		bot.replyForError(msg.Chat.ID, err, cfg)
+	} else {
+		bot.replyForError(msg.Chat.ID, err, cfg)
 	}
 	return false
 }
@@ -192,7 +195,7 @@ func (bot Bot) matchAddOtherFieldsObject(msg *tgbotapi.Message, tripObject *Trip
 			bot.replyWithKeyboard(msg.Chat.ID, cfg.Errors.IncorrectInput, [][]string{{cfg.Buttons.Cancel}}, cfg)
 			return true
 		}
-		if msg.Document != nil {
+		if msg.Document != nil && tripObject.Label != TripLabel {
 			if err := bot.userService.TryConsume(bot.ctx, msg.Chat.ID); err != nil {
 				bot.replyForError(msg.Chat.ID, err, cfg)
 				return true
@@ -349,6 +352,7 @@ func (bot Bot) handleUpdate(update tgbotapi.Update) {
 			} else if processTripObjects(langCfg, func(tripObject TripObject) bool { return bot.matchAddOtherFieldsObject(msg, &tripObject, langCfg) }) {
 			} else if processTripObjects(langCfg, func(tripObject TripObject) bool { return bot.matchAddedObject(msg, &tripObject, langCfg) }) {
 			} else if bot.matchByText(msg, "start", []string{}) {
+				bot.userService.GetOrCreate(bot.ctx, msg.Chat.ID)
 				bot.userService.SetState(msg.Chat.ID, service.Default)
 				bot.replyWithKeyboard(
 					msg.Chat.ID,

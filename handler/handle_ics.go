@@ -177,11 +177,7 @@ func (h BookingHandler) HandleMakeICS(
 
 	msg := tgbotapi.NewMessage(callback.From.ID, cfg.ICS.Success)
 
-	edit, err := h.HandleGetSingle(ctx, callback, objectID, cfg)
-	if err != nil {
-		return nil, err
-	}
-	return []tgbotapi.Chattable{ics, msg, edit}, nil
+	return []tgbotapi.Chattable{ics, msg}, nil
 }
 
 // Event

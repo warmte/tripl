@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	. "github.com/warmte/tripl/common"
 	"github.com/warmte/tripl/lang"
 )
 
@@ -64,7 +65,7 @@ func TestRmNull(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := rmNull(tt.in)
+			got := Normalize(tt.in)
 			if !equalStringPointers(got, tt.want) {
 				t.Fatalf("rmNull() = %v, want %v", got, tt.want)
 			}

@@ -132,7 +132,7 @@ func (h CommonHandler[T]) HandleDeleteSingleConfirmed(
 		cfg.Deleted,
 	)
 
-	return []tgbotapi.Chattable{&edit, BuildMsgWithKeyboard(edit.ChatID, cfg.Menu, BMain(cfg), cfg)}, nil
+	return []tgbotapi.Chattable{&edit}, nil
 }
 
 func (h CommonHandler[T]) HandleAttachSingle(

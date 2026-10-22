@@ -40,6 +40,10 @@ func ICSContent(obj TripObjectView, startZone, endZone string, cfg *lang.Cfg) ([
 			}
 		}
 
+		if !end.UTC().After(start.UTC()) {
+			return nil, ErrDatetimeRestraint
+		}
+
 		description = obj.Show(&cfg.TripObjects.Ticket)
 
 	case Booking:
@@ -60,6 +64,9 @@ func ICSContent(obj TripObjectView, startZone, endZone string, cfg *lang.Cfg) ([
 		}
 
 		description = obj.Show(&cfg.TripObjects.Booking)
+		if !end.After(start) {
+			return nil, ErrDatetimeRestraint
+		}
 
 	case Event:
 		if v.StartTime == nil {
@@ -88,13 +95,12 @@ func ICSContent(obj TripObjectView, startZone, endZone string, cfg *lang.Cfg) ([
 		}
 
 		description = obj.Show(&cfg.TripObjects.Event)
+		if !end.After(start) {
+			return nil, ErrDatetimeRestraint
+		}
 
 	default:
 		return nil, fmt.Errorf("unsupported ICS object type %T", obj)
-	}
-
-	if !end.After(start) {
-		return nil, ErrDatetimeRestraint
 	}
 
 	lines := []string{

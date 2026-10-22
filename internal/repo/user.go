@@ -35,7 +35,7 @@ func (r *UserRepository) GetOrCreate(
 		`INSERT INTO users (id, language)
 		 VALUES ($1, $2)
 		 ON CONFLICT (id)
-		 DO UPDATE SET id = users.id
+		 DO UPDATE SET language = users.language
 		 RETURNING id, language, created_at`,
 		userID,
 		language,
@@ -64,7 +64,7 @@ func (r *UserRepository) UpdateLangOrCreate(
 		`INSERT INTO users (id, language)
 		 VALUES ($1, $2)
 		 ON CONFLICT (id)
-		 DO UPDATE SET language = users.language
+		 DO UPDATE SET language = EXCLUDED.language
 		 RETURNING id, language, created_at`,
 		userID,
 		language,

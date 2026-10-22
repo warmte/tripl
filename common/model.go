@@ -394,25 +394,19 @@ func (f Trip) Show(cfg *lang.TripObjectCfg) string {
 }
 
 func (f Ticket) Preview(cfg *lang.TripObjectCfg) string {
-	return fmt.Sprintf("/tt%d %s-%s\n%s, %s - %s", f.ID, *f.DeparturePoint, *f.ArrivalPoint, *f.Vehicle, f.DepartureTime.Format(DatetimeLayout), f.ArrivalTime.Format(DatetimeLayout))
+	return fmt.Sprintf("/tt%d %s - %s\n%s%s", f.ID, optStr(f.DeparturePoint), optStr(f.ArrivalPoint), optStr(f.Vehicle), optDateStr(f.DepartureTime, f.ArrivalTime, DatetimeLayout))
 }
 
 func (f Booking) Preview(cfg *lang.TripObjectCfg) string {
-	return fmt.Sprintf("/bk%d %s\n%s, %s - %s", f.ID, *f.Place, *f.City, f.CheckInDate.Format(DateLayout), f.CheckOutDate.Format(DateLayout))
+	return fmt.Sprintf("/bk%d %s\n%s%s", f.ID, optStr(f.Place), optStr(f.City), optDateStr(f.CheckInDate, f.CheckOutDate, DateLayout))
 }
 
 func (f Event) Preview(cfg *lang.TripObjectCfg) string {
-	res := fmt.Sprintf("/ev%d %s\n%s, %s", f.ID, *f.Name, *f.Location, f.StartTime.Format(DatetimeLayout))
-
-	if f.EndTime != nil {
-		return fmt.Sprintf("%s - %s", res, f.EndTime.Format(DatetimeLayout))
-	} else {
-		return res
-	}
+	return fmt.Sprintf("/ev%d %s\n%s%s", f.ID, optStr(f.Name), optStr(f.Location), optDateStr(f.StartTime, f.EndTime, DatetimeLayout))
 }
 
 func (f Trip) Preview(cfg *lang.TripObjectCfg) string {
-	return fmt.Sprintf("/tr%d %s, %s-%s", f.ID, f.Name, f.StartDate.Format(DateLayout), f.EndDate.Format(DateLayout))
+	return fmt.Sprintf("/tr%d %s, %s - %s", f.ID, f.Name, f.StartDate.Format(DateLayout), f.EndDate.Format(DateLayout))
 }
 
 func (f Ticket) GetID() int64 {

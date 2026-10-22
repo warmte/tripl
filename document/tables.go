@@ -106,6 +106,8 @@ func CSVContent(
 	var buf bytes.Buffer
 	w := csv.NewWriter(&buf)
 
+	w.Comma = ';'
+
 	for i, s := range exportSections(tickets, bookings, events, cfg) {
 		if i > 0 {
 			if err := w.Write([]string{}); err != nil {
