@@ -395,6 +395,9 @@ func parseOptionalDateTime(date *string, value *string) *time.Time {
 
 func cleanJSONResponse(value string) string {
 	value = strings.TrimSpace(value)
+	value = strings.TrimPrefix(value, "```json")
+	value = strings.TrimPrefix(value, "```")
+	value = strings.TrimSuffix(value, "```")
 	return lang.Clean(value)
 }
 

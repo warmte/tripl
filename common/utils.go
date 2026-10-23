@@ -90,7 +90,7 @@ func NormalizeCost(raw string) string {
 }
 
 func NormalizeCurrency(rawStr string) string {
-	raw := cropStr(strings.TrimSpace(rawStr), 16)
+	raw := cropStr(strings.TrimSpace(rawStr), 256)
 	s := strings.ToLower(strings.TrimSpace(raw))
 	if code, ok := currencyAliases[s]; ok {
 		return code

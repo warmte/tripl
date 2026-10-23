@@ -28,10 +28,12 @@ func parseOptionalDatetime(input string, layout string, name string) (*time.Time
 func opt(input string) *string {
 	if input == "-" {
 		return nil
-	} else {
-		r := lang.Clean(input)
-		return &r
 	}
+	r := strings.TrimSpace(lang.Clean(input))
+	if r == "" {
+		return nil
+	}
+	return &r
 }
 
 func hasTooLongField(fields ...string) bool {

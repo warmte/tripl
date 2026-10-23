@@ -45,6 +45,9 @@ func (bot Bot) replyWithKeyboard(userID int64, text string, buttons [][]string, 
 }
 
 func (bot Bot) replyForError(userID int64, err error, cfg *lang.Cfg) {
+	if strings.Contains(err.Error(), "message is not modified") {
+		return
+	}
 	bot.replyWithKeyboard(userID, GetErrorMessage(err, *cfg), [][]string{{cfg.Buttons.Cancel}}, cfg)
 	log.Printf("internal error: %v", err)
 }
@@ -139,6 +142,8 @@ func (bot Bot) matchShowSingle(msg *tgbotapi.Message, cfg *lang.Cfg) bool {
 			if err == nil {
 				newMsg, err = bot.handlers.TripHandler.ShowSingle(bot.ctx, msg.Chat.ID, int64(id), cfg)
 			}
+		} else {
+			return false
 		}
 		if err == nil {
 			_, err = bot.api.Send(newMsg)
@@ -381,7 +386,7 @@ func (bot *Bot) Run(shutdownCtx context.Context) {
 	log.Printf("Authorized on account %s", bot.api.Self.UserName)
 
 	u := tgbotapi.NewUpdate(0)
-	u.Timeout = 60
+	u.Timeout = 10
 
 	updates := bot.api.GetUpdatesChan(u)
 
@@ -390,10 +395,15 @@ func (bot *Bot) Run(shutdownCtx context.Context) {
 		bot.api.StopReceivingUpdates()
 	}()
 
+	lastID := -1
 	for update := range updates {
-		if bot.ctx.Err() != nil {
-			break
-		}
 		bot.handleUpdate(update)
+		lastID = update.UpdateID
+	}
+
+	if lastID >= 0 {
+		if _, err := bot.api.GetUpdates(tgbotapi.UpdateConfig{Offset: lastID + 1, Limit: 1}); err != nil {
+			log.Printf("confirm last update: %v", err)
+		}
 	}
 }

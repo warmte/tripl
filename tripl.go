@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -42,12 +43,13 @@ func main() {
 	log.SetOutput(w)
 	tgbotapi.SetLogger(log.New(w, "", log.LstdFlags))
 
-	signalCtx, stop := signal.NotifyContext(
-		context.Background(),
-		os.Interrupt,
-		syscall.SIGTERM,
-	)
+	signalCtx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
+	go func() {
+		<-signalCtx.Done()
+		stop()
+		log.Println("shutdown: signal received, finishing current work")
+	}()
 
 	ctx, cancelWork := context.WithCancel(context.Background())
 	defer cancelWork()
@@ -107,12 +109,15 @@ func main() {
 		documentHandler.RunHandleResult(ctx)
 	}()
 
-	go notificationScheduler.Run(signalCtx)
-	go userService.RunDailyUsageCleanup(signalCtx)
+	var bg sync.WaitGroup
+	bg.Add(2)
+	go func() { defer bg.Done(); notificationScheduler.Run(signalCtx) }()
+	go func() { defer bg.Done(); userService.RunDailyUsageCleanup(signalCtx) }()
 
 	b.Run(signalCtx)
-
 	documentHandler.Shutdown()
 	<-resultDone
+	bg.Wait()
 	cancelWork()
+	log.Println("shutdown: done")
 }

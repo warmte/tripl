@@ -26,7 +26,6 @@ type DocumentResult struct {
 }
 
 type documentTask struct {
-	ctx    context.Context
 	chatID int64
 	doc    *tgbotapi.Document
 	label  Label
@@ -54,6 +53,9 @@ type DocumentHandler struct {
 	stopCh       chan struct{}
 	stopped      bool
 	shutdownOnce sync.Once
+
+	ctx    context.Context
+	cancel context.CancelFunc
 }
 
 func NewDocumentHandler(
@@ -66,6 +68,7 @@ func NewDocumentHandler(
 	bookingHandler *BookingHandler,
 	eventHandler *EventHandler,
 ) *DocumentHandler {
+	ctx, cancel := context.WithCancel(context.Background())
 	h := &DocumentHandler{
 		api:            api,
 		pdfService:     pdfService,
@@ -78,6 +81,8 @@ func NewDocumentHandler(
 		notify:         make(chan struct{}, 1),
 		results:        make(chan DocumentResult),
 		stopCh:         make(chan struct{}),
+		ctx:            ctx,
+		cancel:         cancel,
 	}
 
 	h.wg.Add(workersCount)
@@ -102,7 +107,6 @@ func (h *DocumentHandler) Handle(
 	}
 
 	task := documentTask{
-		ctx:    ctx,
 		chatID: message.Chat.ID,
 		doc:    message.Document,
 		label:  label,
@@ -128,9 +132,17 @@ func (h *DocumentHandler) Shutdown() {
 	h.shutdownOnce.Do(func() {
 		h.mu.Lock()
 		h.stopped = true
+		pending := h.queue
+		h.queue = nil
 		close(h.stopCh)
 		h.mu.Unlock()
+
+		h.cancel()
 		h.wg.Wait()
+
+		for _, task := range pending {
+			h.results <- DocumentResult{ChatID: task.chatID, Label: task.label, Err: context.Canceled}
+		}
 		close(h.results)
 	})
 }
@@ -170,13 +182,13 @@ func (h *DocumentHandler) process(task documentTask) {
 		Label:  task.label,
 	}
 
-	if err := task.ctx.Err(); err != nil {
+	if err := h.ctx.Err(); err != nil {
 		result.Err = err
 		h.results <- result
 		return
 	}
 
-	pdf, err := h.pdfService.Download(task.ctx, task.doc)
+	pdf, err := h.pdfService.Download(h.ctx, task.doc)
 	if err != nil {
 		result.Err = fmt.Errorf("download PDF: %w", err)
 		h.results <- result
@@ -184,20 +196,20 @@ func (h *DocumentHandler) process(task documentTask) {
 	}
 	defer h.pdfService.Remove(pdf)
 
-	text, err := h.pdfParser.Parse(task.ctx, pdf)
+	text, err := h.pdfParser.Parse(h.ctx, pdf)
 	if err != nil {
 		result.Err = fmt.Errorf("parse PDF: %w", err)
 		h.results <- result
 		return
 	}
 
-	lang := h.userService.GetLanguage(task.ctx, task.chatID)
+	lang := h.userService.GetLanguage(h.ctx, task.chatID)
 
 	err = nil
 	extracted := []TripObjectView{}
 	switch task.label {
 	case TicketLabel:
-		tickets, err1 := h.aiService.ExtractTicket(task.ctx, task.chatID, text, lang)
+		tickets, err1 := h.aiService.ExtractTicket(h.ctx, task.chatID, text, lang)
 		if err1 == nil {
 			for _, ticket := range tickets {
 				extracted = append(extracted, ticket)
@@ -206,14 +218,14 @@ func (h *DocumentHandler) process(task documentTask) {
 			err = err1
 		}
 	case BookingLabel:
-		booking, err1 := h.aiService.ExtractBooking(task.ctx, task.chatID, text, lang)
+		booking, err1 := h.aiService.ExtractBooking(h.ctx, task.chatID, text, lang)
 		if err1 == nil {
 			extracted = []TripObjectView{booking}
 		} else {
 			err = err1
 		}
 	case EventLabel:
-		event, err1 := h.aiService.ExtractEvent(task.ctx, task.chatID, text, lang)
+		event, err1 := h.aiService.ExtractEvent(h.ctx, task.chatID, text, lang)
 		if err1 == nil {
 			extracted = []TripObjectView{event}
 		} else {
@@ -245,7 +257,7 @@ func (h *DocumentHandler) handleResult(ctx context.Context, result DocumentResul
 			log.Printf("panic on document handling%v\n%s", r, debug.Stack())
 		}
 	}()
-	
+
 	cfg := h.userService.GetLanguageCfg(ctx, result.ChatID)
 	if result.Err != nil {
 		h.api.Send(tgbotapi.NewMessage(result.ChatID, cfg.Errors.DocumentFailed))

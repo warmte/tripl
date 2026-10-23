@@ -296,7 +296,7 @@ func (h CommonHandler[T]) HandleEditReply(
 		return nil, nil
 	}
 
-	value := strings.TrimSpace(msg.Text)
+	value := strings.TrimSpace(lang.Clean(msg.Text))
 	if value == "" {
 		return nil, fmt.Errorf("empty edit value")
 	}
@@ -305,7 +305,7 @@ func (h CommonHandler[T]) HandleEditReply(
 		return nil, ErrTooLongField
 	}
 
-	field, err := parseEditValue(editCtx.Label, editCtx.FieldID, lang.Clean(value))
+	field, err := parseEditValue(editCtx.Label, editCtx.FieldID, value)
 	if err != nil {
 		return nil, err
 	}
