@@ -39,6 +39,7 @@ type ButtonsCfg struct {
 	Skip     string  `json:"skip"`
 	Stats    string  `json:"stats"`
 	MakeIcs  string  `json:"make_ics"`
+	Archive  string  `json:"archive"`
 	Lang     LangCfg `json:"lang"`
 }
 

@@ -15,35 +15,34 @@ func (h CommonHandler[T]) ShowList(
 	ctx context.Context,
 	userID int64,
 	listType ListType,
+	page int,
 	cfg *lang.Cfg,
 ) (*tgbotapi.MessageConfig, error) {
-	const page = 0
+
+	objectCfg := TripObjectCfgByLabel(cfg, h.label)
+
+	otherName := cfg.Buttons.Archive
+	otherAction := ArchiveList
+	title := objectCfg.Actual
+	action := ActualList
+	switch listType {
+	case ActualListType:
+	case ArchiveListType:
+		action = ArchiveList
+		otherName = objectCfg.Many
+		otherAction = ActualList
+		title = objectCfg.Archive
+	default:
+		return nil, fmt.Errorf("unknown list type: %s", listType)
+	}
 
 	result, err := h.service.GetPage(ctx, userID, listType, page)
 	if err != nil {
 		return nil, err
 	}
 
-	var listAction CallbackAction
-	switch listType {
-	case ActualListType:
-		listAction = ActualList
-	case ArchiveListType:
-		listAction = ArchiveList
-	default:
-		return nil, fmt.Errorf("unsopported list type: %s", listType)
-	}
-
-	keyboard := makeListKeyboard(h.label, listAction, page, result.HasNext)
-
-	message := tgbotapi.NewMessage(
-		userID,
-		h.RenderObjects(
-			result.Items,
-			TripObjectCfgByLabel(cfg, h.label),
-		),
-	)
-
+	keyboard := makeListKeyboard(h.label, action, page, result.HasNext, true, otherName, otherAction)
+	message := tgbotapi.NewMessage(userID, fmt.Sprintf("%s. %s\n\n%s", title, cfg.Info, h.RenderObjects(result.Items, objectCfg)))
 	message.ReplyMarkup = keyboard
 
 	return &message, nil
@@ -53,49 +52,40 @@ func (h CommonHandler[T]) HandleList(
 	ctx context.Context,
 	callback *tgbotapi.CallbackQuery,
 	listCallback Callback,
-	cfg lang.TripObjectCfg,
+	cfg *lang.Cfg,
 ) (*tgbotapi.EditMessageTextConfig, error) {
 	if callback.Message == nil {
 		return nil, fmt.Errorf("callback message is nil")
 	}
 
-	var listType ListType
-	switch listCallback.Action {
-	case ActualList:
-		listType = ActualListType
-	case ArchiveList:
+	listType := ActualListType
+	if listCallback.Action == ArchiveList {
 		listType = ArchiveListType
-	default:
-		return nil, fmt.Errorf("unsupported list type")
+	} else if listCallback.Action != ActualList {
+		return nil, fmt.Errorf("unknown list action: %s", listCallback.Action)
 	}
 
-	page, err := h.service.GetPage(
-		ctx,
-		callback.From.ID,
-		listType,
-		int(listCallback.V1),
-	)
+	showList, err := h.ShowList(ctx, callback.From.ID, listType, int(listCallback.V1), cfg)
 	if err != nil {
-		return nil, fmt.Errorf("get page: %w", err)
+		return nil, err
 	}
 
-	text := h.RenderObjects(page.Items, cfg)
-	keyboard := makeListKeyboard(h.label, listCallback.Action, listCallback.V1, page.HasNext)
+	keyboard, ok := showList.ReplyMarkup.(*tgbotapi.InlineKeyboardMarkup)
 
 	var edit tgbotapi.EditMessageTextConfig
 
-	if keyboard != nil {
+	if ok {
 		edit = tgbotapi.NewEditMessageTextAndMarkup(
 			callback.Message.Chat.ID,
 			callback.Message.MessageID,
-			text,
+			showList.Text,
 			*keyboard,
 		)
 	} else {
 		edit = tgbotapi.NewEditMessageText(
 			callback.Message.Chat.ID,
 			callback.Message.MessageID,
-			text,
+			showList.Text,
 		)
 	}
 
@@ -191,17 +181,23 @@ func (h CommonHandler[T]) HandleListForTrip(
 
 func makeListKeyboard(
 	label Label,
-	list CallbackAction,
-	page int64,
+	action CallbackAction,
+	page int,
 	hasNext bool,
+	needOther bool,
+	otherName string,
+	otherAction CallbackAction,
 ) *tgbotapi.InlineKeyboardMarkup {
 	var buttons []tgbotapi.InlineKeyboardButton
 
+	if needOther {
+		buttons = append(buttons, button(otherName, MakeCallback(label, otherAction, 0)))
+	}
 	if page > 0 {
-		buttons = append(buttons, button("←", MakeCallback(label, list, page-1)))
+		buttons = append(buttons, button("←", MakeCallback(label, action, int64(page-1))))
 	}
 	if hasNext {
-		buttons = append(buttons, button("→", MakeCallback(label, list, page+1)))
+		buttons = append(buttons, button("→", MakeCallback(label, action, int64(page+1))))
 	}
 	if len(buttons) == 0 {
 		return nil
@@ -269,7 +265,7 @@ func (h CommonHandler[T]) buildListForDate(
 		return "", nil, err
 	}
 	singleKeyboard := makeSingleKeyboard(h.label, item.GetID(), item.GetTripID(), cfg)
-	listKeyboard := makeListKeyboard(h.label, ForDate(date), int64(page), result.HasNext)
+	listKeyboard := makeListKeyboard(h.label, ForDate(date), page, result.HasNext, false, "", "")
 	var rows [][]tgbotapi.InlineKeyboardButton
 	if singleKeyboard != nil {
 		rows = append(rows, singleKeyboard.InlineKeyboard...)

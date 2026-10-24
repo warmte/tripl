@@ -51,7 +51,7 @@ func (h CommonHandler[T]) SelectAction(
 
 	switch parsedCallback.Action {
 	case ActualList, ArchiveList:
-		r, err := h.HandleList(ctx, callback, parsedCallback, TripObjectCfgByLabel(cfg, parsedCallback.Label))
+		r, err := h.HandleList(ctx, callback, parsedCallback, cfg)
 		return []tgbotapi.Chattable{r}, err
 	case GetSingle:
 		r, err := h.HandleGetSingle(ctx, callback, parsedCallback.V1, cfg)

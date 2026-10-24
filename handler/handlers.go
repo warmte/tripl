@@ -105,13 +105,13 @@ func (h *Handlers) ShowListFor(
 ) (*tgbotapi.MessageConfig, error) {
 	switch label {
 	case TicketLabel:
-		return h.TicketHandler.ShowList(ctx, userID, listType, cfg)
+		return h.TicketHandler.ShowList(ctx, userID, listType, 0, cfg)
 	case BookingLabel:
-		return h.BookingHandler.ShowList(ctx, userID, listType, cfg)
+		return h.BookingHandler.ShowList(ctx, userID, listType, 0, cfg)
 	case EventLabel:
-		return h.EventHandler.ShowList(ctx, userID, listType, cfg)
+		return h.EventHandler.ShowList(ctx, userID, listType, 0, cfg)
 	case TripLabel:
-		return h.TripHandler.ShowList(ctx, userID, listType, cfg)
+		return h.TripHandler.ShowList(ctx, userID, listType, 0, cfg)
 	default:
 		return nil, ErrIncorrectInput
 	}

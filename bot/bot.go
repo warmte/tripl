@@ -87,12 +87,6 @@ func (bot Bot) matchListObjects(
 		if err == nil {
 			bot.api.Send(*newMsg)
 		}
-
-		bot.replyWithKeyboard(
-			msg.Chat.ID,
-			fmt.Sprintf("%s. %s", tripObject.Cfg.Actual, cfg.Info),
-			[][]string{{tripObject.Cfg.Archive, cfg.Buttons.Back}}, cfg)
-
 		return true
 	}
 
@@ -105,12 +99,6 @@ func (bot Bot) matchListObjects(
 		if err == nil {
 			bot.api.Send(*newMsg)
 		}
-
-		bot.replyWithKeyboard(
-			msg.Chat.ID,
-			fmt.Sprintf("%s. %s", tripObject.Cfg.Archive, cfg.Info),
-			[][]string{{tripObject.Cfg.Actual, cfg.Buttons.Back}}, cfg)
-
 		return true
 	}
 
