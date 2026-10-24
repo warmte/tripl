@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	MaxPDFTextLength = 2800
+	MaxPDFTextLength = 3200
 	pdfParseTimeout  = 20 * time.Second
 )
 
