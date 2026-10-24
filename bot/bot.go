@@ -126,21 +126,29 @@ func (bot Bot) matchShowSingle(msg *tgbotapi.Message, cfg *lang.Cfg) bool {
 			id, err = bot.parseByCmd(msg, TicketCmd)
 			if err == nil {
 				newMsg, err = bot.handlers.TicketHandler.ShowSingle(bot.ctx, msg.Chat.ID, int64(id), cfg)
+			} else {
+				return false
 			}
 		} else if bot.matchByCmd(msg, BookingCmd) {
 			id, err = bot.parseByCmd(msg, BookingCmd)
 			if err == nil {
 				newMsg, err = bot.handlers.BookingHandler.ShowSingle(bot.ctx, msg.Chat.ID, int64(id), cfg)
+			} else {
+				return false
 			}
 		} else if bot.matchByCmd(msg, EventCmd) {
 			id, err = bot.parseByCmd(msg, EventCmd)
 			if err == nil {
 				newMsg, err = bot.handlers.EventHandler.ShowSingle(bot.ctx, msg.Chat.ID, int64(id), cfg)
+			} else {
+				return false
 			}
 		} else if bot.matchByCmd(msg, TripCmd) {
 			id, err = bot.parseByCmd(msg, TripCmd)
 			if err == nil {
 				newMsg, err = bot.handlers.TripHandler.ShowSingle(bot.ctx, msg.Chat.ID, int64(id), cfg)
+			} else {
+				return false
 			}
 		} else {
 			return false

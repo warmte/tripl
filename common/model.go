@@ -401,15 +401,19 @@ func (f Trip) Show(cfg *lang.TripObjectCfg) string {
 }
 
 func (f Ticket) Preview(cfg *lang.TripObjectCfg) string {
-	return fmt.Sprintf("/%s%d %s - %s\n%s%s", TicketCmd, f.ID, optStr(f.DeparturePoint), optStr(f.ArrivalPoint), optStr(f.Vehicle), optDateStr(f.DepartureTime, f.ArrivalTime, DatetimeLayout))
+	return fmt.Sprintf("/%s%d %s\n%s", TicketCmd, f.ID,
+		joinNonEmpty(" - ", optStr(f.DeparturePoint), optStr(f.ArrivalPoint)),
+		joinNonEmpty(", ", optStr(f.Vehicle), optDateStr(f.DepartureTime, f.ArrivalTime, DatetimeLayout)))
 }
 
 func (f Booking) Preview(cfg *lang.TripObjectCfg) string {
-	return fmt.Sprintf("/%s%d %s\n%s%s", BookingCmd, f.ID, optStr(f.Place), optStr(f.City), optDateStr(f.CheckInDate, f.CheckOutDate, DateLayout))
+	return fmt.Sprintf("/%s%d %s\n%s", BookingCmd, f.ID, optStr(f.Place),
+		joinNonEmpty(", ", optStr(f.City), optDateStr(f.CheckInDate, f.CheckOutDate, DateLayout)))
 }
 
 func (f Event) Preview(cfg *lang.TripObjectCfg) string {
-	return fmt.Sprintf("/%s%d %s\n%s%s", EventCmd, f.ID, optStr(f.Name), optStr(f.Location), optDateStr(f.StartTime, f.EndTime, DatetimeLayout))
+	return fmt.Sprintf("/%s%d %s\n%s", EventCmd, f.ID, optStr(f.Name),
+		joinNonEmpty(", ", optStr(f.Location), optDateStr(f.StartTime, f.EndTime, DatetimeLayout)))
 }
 
 func (f Trip) Preview(cfg *lang.TripObjectCfg) string {

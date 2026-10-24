@@ -296,7 +296,8 @@ func (h CommonHandler[T]) HandleEditReply(
 		return nil, nil
 	}
 
-	value := strings.TrimSpace(lang.Clean(msg.Text))
+	value := strings.TrimSpace(lang.Clean(strings.ReplaceAll(msg.Text, "\n", " ")))
+
 	if value == "" {
 		return nil, fmt.Errorf("empty edit value")
 	}

@@ -1,7 +1,6 @@
 package common
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -158,14 +157,28 @@ func optStr(s *string) string {
 	}
 }
 
-func optDateStr(start *time.Time, end *time.Time, layout string) string {
-	if start == nil {
+func joinNonEmpty(sep string, parts ...string) string {
+	out := make([]string, 0, len(parts))
+	for _, p := range parts {
+		if p != "" {
+			out = append(out, p)
+		}
+	}
+	return strings.Join(out, sep)
+}
+
+func optDateStr(start, end *time.Time, layout string) string {
+	format := func(t *time.Time) string {
+		if t == nil {
+			return "?"
+		}
+		return t.Format(layout)
+	}
+	if start == nil && end == nil {
 		return ""
 	}
-
 	if end == nil {
-		return ", " + start.Format(layout)
+		return format(start)
 	}
-
-	return fmt.Sprintf(", %s - %s", start.Format(layout), end.Format(layout))
+	return format(start) + " - " + format(end)
 }
